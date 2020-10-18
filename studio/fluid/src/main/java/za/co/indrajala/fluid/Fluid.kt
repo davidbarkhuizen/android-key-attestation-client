@@ -1,8 +1,11 @@
 package za.co.indrajala.fluid
 
+import android.R.attr.key
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Log
+import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 
@@ -68,21 +71,21 @@ class Fluid {
             .setKeySize(4096)
             .build()
 
+        log("KeySpec.isStrongBoxBacked", keySpec.isStrongBoxBacked)
+
         keyGenerator.initialize(keySpec)
 
         val keyPair = keyGenerator.generateKeyPair()
 
-        log("isStrongBoxBacked", keySpec.isStrongBoxBacked)
-        
+        val entry = ks.getEntry(ROOT_KEY_ALIAS, null)
+        val privateKey = (entry as KeyStore.PrivateKeyEntry).privateKey
+        val publicKey = ks.getCertificate(ROOT_KEY_ALIAS).publicKey
 
 
+        val factory = KeyFactory.getInstance(privateKey.algorithm, "AndroidKeyStore")
+        val keyInfo = factory.getKeySpec(privateKey, KeyInfo::class.java)
 
-
-
-//        val x = keyPair.is
-
-
-
-
+        val isInsideSecureHardware: Boolean = keyInfo.isInsideSecureHardware
+        log("PvtKey.KeyInfo.isInsideSecureHardware", isInsideSecureHardware)
     }
 }
