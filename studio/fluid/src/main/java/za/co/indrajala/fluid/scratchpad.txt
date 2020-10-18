@@ -1,0 +1,25 @@
+
+//
+//        val x =
+//
+//        val certSerialNumber = BigInteger.valueOf(1)
+//
+//        val notBeforeDate = GregorianCalendar()
+//        val notAfterDate = GregorianCalendar()
+//        notAfterDate.add(Calendar.YEAR, 1)
+//
+//        val keyspec_C = KeyGenParameterSpec
+//            .Builder(rootKeyAlias, ENC_DEC)
+//            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+//            .setCertificateSerialNumber(certSerialNumber)       //Serial number used for the self-signed certificate of the generated key pair, default is 1
+//            //.setCertificateSubject(X500Principal("CN=$KEY_ALIAS"))
+//            //.setDigests(KeyProperties.DIGEST_SHA256)
+//            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+//            .setCertificateNotBefore(notBeforeDate.time)
+//            .setCertificateNotAfter(notAfterDate.time)
+//            .setUserAuthenticationRequired(true)
+//            .build()
+//
+//        keyGenerator.init(
+//            AlgorithmParameterSpec.
+//        )

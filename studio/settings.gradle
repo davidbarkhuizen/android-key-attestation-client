@@ -1,2 +1,3 @@
+include ':fluid'
 include ':app'
 rootProject.name = "Fluid"
