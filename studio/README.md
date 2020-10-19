@@ -15,3 +15,9 @@ GPU|Adreno 508
 RAM|32GB 3GB RAM, 32GB 4GB RAM, 64GB 4GB RAM eMMC 5.1
 USB port|C
 NFC|yes
+
+## Android KeyStore
+
+### important aspects
+
+KeySpec.isStrongBoxBacked vs KeyInfo.isInsideSecureHardware
