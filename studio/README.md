@@ -1,3 +1,10 @@
+TODO
+- secure import of public key generated server-side
+- remote key attestation
+- performance profiling (key gen, enc, dec, sign, verify)
+
+=> use SoftHSM for server-side work, to support automated testing
+
 # Fluid Authentication & Authorization
 
 ## Glossary
@@ -11,9 +18,9 @@ HAL|(Android) Harware Abstraction Layer
 
 ### Summary Comparison of Relevant Security Features
 
-phone|TEE/SEE|isStrongBoxBacked
------|-------|-----------------
-Nokia 6.1|Y|N
+phone|HW-backed|StrongBox-backed|1024 RSA|2048 RSA
+-----|----------------|-----------------|--------|--------
+Nokia 6.1|Y|N|203 ms|939 ms
 
 ### Nokia 6.1
 
@@ -42,8 +49,6 @@ isolation of crypto keys and operations
   - i.e. process isolation
   - at worst ops performed my os process, at best in dedicated harware secure element
 
-
-
 ### important aspects
 
 KeyInfo.isInsideSecureHardware vs KeySpec.isStrongBoxBacked 
@@ -62,3 +67,12 @@ KeyInfo
 
 .getUserAuthenticationType() =  
 KeyProperties[AUTH_BIOMETRIC_STRONG | AUTH_DEVICE_CREDENTIAL]  
+
+### StrongBox Low Power SubSuite 
+
+Cipher|Key Size (bit)
+RSA|2048
+AES|128,256
+ECDSA|P-256
+HMAC-SHA256|64 - 512 (8 - 64 bytes)
+Triple DES|168
