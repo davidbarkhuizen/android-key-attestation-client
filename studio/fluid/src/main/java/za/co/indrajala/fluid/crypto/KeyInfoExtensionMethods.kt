@@ -4,8 +4,9 @@ import android.security.keystore.KeyInfo
 
 fun KeyInfo.describe() : String =
     listOf(
-        "KS Alias: $keystoreAlias",
-        "Size (bits): $keySize",
-        "Sig Padding: ${signaturePaddings.joinToString(", ")}",
-        "EncDec Padding: ${encryptionPaddings.joinToString(", ")}"
+        "alias: $keystoreAlias",
+        "size (bits): $keySize",
+        "isInsideSecureHardware: $isInsideSecureHardware",
+        "signature padding(s): ${signaturePaddings.joinToString(", ")}",
+        "encryption padding(s): ${encryptionPaddings.joinToString(", ")}"
     ).joinToString("\n")
