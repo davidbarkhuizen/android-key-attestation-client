@@ -1,6 +1,7 @@
 package za.co.indrajala.fluid
 
 import android.icu.util.Calendar
+import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
@@ -103,12 +104,12 @@ class Fluid {
         val digest = KeyProperties.DIGEST_SHA512
         val sigPadding = KeyProperties.SIGNATURE_PADDING_RSA_PSS
 
-        val validFrom = Calendar.getInstance().time
+        val validFrom = GregorianCalendar()
+
         val minutes = 30
 
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = validFrom.time + (30 * 50 * 1000)
-        val validTo = calendar.time
+        val validTo = validFrom.clone() as GregorianCalendar
+        validTo.add(Calendar.MINUTE, minutes)
 
         val keyGenerator = KeyPairGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE_NAME
@@ -120,8 +121,8 @@ class Fluid {
             .setCertificateSerialNumber(certSN)
             .setDigests(digest)
             .setSignaturePaddings(sigPadding)
-//            .setKeyValidityStart(validFrom)
-//            .setKeyValidityEnd(validTo)
+            .setCertificateNotBefore(validFrom.time)
+            .setCertificateNotAfter(validTo.time)
             .setKeySize(keySize) // 4096 => not supported by low power key operation suite
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
             .build()
