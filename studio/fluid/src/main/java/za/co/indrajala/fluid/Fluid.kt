@@ -4,10 +4,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import za.co.indrajala.fluid.crypto.KeyPurpose
-import za.co.indrajala.fluid.crypto.describe
-import za.co.indrajala.fluid.crypto.toDER
-import za.co.indrajala.fluid.crypto.toPEM
+import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.util.log
 import za.co.indrajala.fluid.util.toHexString
 import java.math.BigInteger
@@ -114,6 +111,9 @@ class Fluid {
         log.v(cert.toPEM())
         log.v(".CER: ASN.1 DER")
         log.v(cert.toDER())
+
+        log.v("BC ASN.1 parse:")
+        log.v(asn1.describe(cert.encoded))
     }
 
     fun init(): Fluid {
