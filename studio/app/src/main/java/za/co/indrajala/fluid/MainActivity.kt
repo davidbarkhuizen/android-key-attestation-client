@@ -10,7 +10,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         try {
-            val fluid = Fluid().init()
+            Fluid().init()
         } catch (e: Exception) {
             log.v(e.toString())
         }

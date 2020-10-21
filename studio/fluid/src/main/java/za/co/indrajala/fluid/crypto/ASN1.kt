@@ -4,7 +4,7 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.util.ASN1Dump
 import java.io.ByteArrayInputStream
 
-class asn1 {
+class ASN1 {
     companion object {
         fun describe(asn1_der: ByteArray): String =
             ASN1Dump.dumpAsString(

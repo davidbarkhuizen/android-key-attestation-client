@@ -1,19 +1,17 @@
 package za.co.indrajala.fluid
 
+import android.icu.util.Calendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
-import android.util.Base64
 import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.util.log
-import za.co.indrajala.fluid.util.toHexString
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.KeyStore
-import java.security.PublicKey
+import java.security.KeyStoreException
 import java.security.cert.Certificate
-import java.security.spec.X509EncodedKeySpec
 import javax.security.auth.x500.X500Principal
 import kotlin.system.measureTimeMillis
 
@@ -21,38 +19,78 @@ class Fluid {
 
     companion object {
 
+        private const val ANDROID_KEY_STORE_TYPE = "AndroidKeyStore"
         private const val ANDROID_KEY_STORE_NAME = "AndroidKeyStore"
 
         private const val ROOT_KEY_ALIAS = "fluid.root"
         private const val KEY_STORE_NAME = "fluid"
 
-        private val keystoreSecret: CharArray = "password".toCharArray()
+        //private val keystoreSecret: CharArray = "password".toCharArray()
     }
 
     private var initialized = false
-    private val ks: KeyStore = KeyStore.getInstance(ANDROID_KEY_STORE_NAME)
+
+    private var ks: KeyStore? = null
+    private fun initializeKeystore(): Boolean {
+
+        log.v_header("keystore initialization")
+
+        if (ks != null) {
+            log.v("keystore has already been initialized.")
+            return true
+        }
+
+        try {
+            log.v("getting reference to keystore instance...")
+            ks = KeyStore.getInstance(ANDROID_KEY_STORE_TYPE)
+
+            log.v("loading keystore persistence from input stream...")
+            ks!!.load(null)
+        } catch (kse: KeyStoreException) {
+            log.e("get keystore instance and load from input stream", kse)
+            return false
+        }
+
+        log.v("keystore initialized:")
+        log.v(ks!!.describe())
+        return true
+    }
+
 
     private fun fingerprintDevice() {
-        val apiLevel = android.os.Build.VERSION.SDK_INT
+        log.v_header("device fingerprint")
 
-        log.v("device fingerprint")
+        val apiLevel = android.os.Build.VERSION.SDK_INT
         log.v("Android API level", apiLevel)
     }
 
-    private fun initializeKeystore() {
+    private fun exportKey(alias: String) {
 
-        log.v("KeyStore", "Type ${ks.type}, Provider ${ks.provider.name}")
+        log.v_header("key export")
 
-        // providers
-        // JKS java key store (Oracle JDK)
-        // BKS bouncy-castle key store
+        log.v("exporting rsa public cert of key with alias $alias")
 
-        ks.load(null)
+        val entry = ks!!.getEntry(alias, null)
+
+        val privateKey = (entry as KeyStore.PrivateKeyEntry).privateKey
+        val keyFactory = KeyFactory.getInstance(privateKey.algorithm, ANDROID_KEY_STORE_NAME)
+
+        val pvtKeyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
+        log.v(pvtKeyInfo.describe())
+
+        val cert: Certificate = ks!!.getCertificate(ROOT_KEY_ALIAS)
+        log.v(".PEM: B64")
+        log.v(cert.toPEM())
+        log.v(".CER: ASN.1 DER")
+        log.v(cert.toDER())
+
+        log.v("BC ASN.1 parse:")
+        log.v(ASN1.describe(cert.encoded))
     }
 
     private fun generateDeviceRootKey() {
 
-        log.v("generating asymmetric RSA key...")
+        log.v_header("key generation")
 
         val alias = ROOT_KEY_ALIAS
 
@@ -65,6 +103,13 @@ class Fluid {
         val digest = KeyProperties.DIGEST_SHA512
         val sigPadding = KeyProperties.SIGNATURE_PADDING_RSA_PSS
 
+        val validFrom = Calendar.getInstance().time
+        val minutes = 30
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = validFrom.time + (30 * 50 * 1000)
+        val validTo = calendar.time
+
         val keyGenerator = KeyPairGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE_NAME
         )
@@ -75,6 +120,8 @@ class Fluid {
             .setCertificateSerialNumber(certSN)
             .setDigests(digest)
             .setSignaturePaddings(sigPadding)
+//            .setKeyValidityStart(validFrom)
+//            .setKeyValidityEnd(validTo)
             .setKeySize(keySize) // 4096 => not supported by low power key operation suite
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
             .build()
@@ -98,36 +145,20 @@ class Fluid {
 
         // retrieve from KeyStore as if we didn't already have a reference
 
-        val entry = ks.getEntry(ROOT_KEY_ALIAS, null)
-
-        val privateKey = (entry as KeyStore.PrivateKeyEntry).privateKey
-        val keyFactory = KeyFactory.getInstance(privateKey.algorithm, ANDROID_KEY_STORE_NAME)
-
-        val pvtKeyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
-        log.v(pvtKeyInfo.describe())
-
-        val cert: Certificate = ks.getCertificate(ROOT_KEY_ALIAS)
-        log.v(".PEM: B64")
-        log.v(cert.toPEM())
-        log.v(".CER: ASN.1 DER")
-        log.v(cert.toDER())
-
-        log.v("BC ASN.1 parse:")
-        log.v(asn1.describe(cert.encoded))
+        exportKey(ROOT_KEY_ALIAS)
     }
 
     fun init(): Fluid {
         log.v("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd")
 
         if (initialized) {
-            log.v("already initialized")
+            log.v("the Fluid module has already initialized!")
             return this
         }
 
-        log.v("initializing...")
-
         fingerprintDevice()
-        initializeKeystore()
+
+        val initialized = initializeKeystore()
 
         generateDeviceRootKey()
 
