@@ -93,7 +93,7 @@ class Fluid {
 
         HTTP.post(
             "http://192.168.8.103:8777/device/register",
-            Gson().toJson(PublicKeyCert("fish"))
+            Gson().toJson(PublicKeyCert(cert.toDER()))
         )
     }
 

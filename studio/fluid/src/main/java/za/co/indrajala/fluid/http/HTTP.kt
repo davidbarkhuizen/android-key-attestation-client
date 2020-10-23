@@ -31,7 +31,7 @@ class HTTP {
 
                 override fun onResponse(call: Call, response: Response) {
                     response.use {
-                        log.v("POST rsp:", response.body.toString())
+                        log.v("POST rsp: ${response.body!!.string()}")
                     }
                 }
             }
