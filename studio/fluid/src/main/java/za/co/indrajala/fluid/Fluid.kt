@@ -5,7 +5,10 @@ import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
+import com.google.gson.Gson
 import za.co.indrajala.fluid.crypto.*
+import za.co.indrajala.fluid.http.HTTP
+import za.co.indrajala.fluid.model.PublicKeyCert
 import za.co.indrajala.fluid.util.log
 import java.math.BigInteger
 import java.security.KeyFactory
@@ -87,6 +90,11 @@ class Fluid {
 
         log.v("BC ASN.1 parse:")
         log.v(ASN1.describe(cert.encoded))
+
+        HTTP.post(
+            "http://192.168.8.103:8777/device/register",
+            Gson().toJson(PublicKeyCert("fish"))
+        )
     }
 
     private fun generateDeviceRootKey() {
