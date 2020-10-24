@@ -153,8 +153,10 @@ class Fluid {
         log.v("avg over $count $avg ms")
 
         // retrieve from KeyStore as if we didn't already have a reference
+    }
 
-        exportKey(ROOT_KEY_ALIAS)
+    fun test() {
+        exportKey(ROOT_KEY_ALIAS);
     }
 
     fun init(): Fluid {
