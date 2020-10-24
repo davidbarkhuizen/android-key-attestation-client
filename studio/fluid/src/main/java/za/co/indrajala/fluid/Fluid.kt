@@ -91,13 +91,26 @@ class Fluid {
         log.v("BC ASN.1 parse:")
         log.v(ASN1.describe(cert.encoded))
 
+        // ------------------------------
+
+        val certChain = ks!!.getCertificateChain(ROOT_KEY_ALIAS)
+
+        log.v("attestation chain - ${certChain.size} links");
+        certChain.forEachIndexed { i, it ->
+            log.v_header("CHAIN KEY $i")
+            log.v(it.toDER())
+            log.v(it.toPEM())
+        }
+
         HTTP.post(
             "http://192.168.8.103:8777/device/register",
-            Gson().toJson(PublicKeyCert(cert.toDER()))
+            Gson().toJson(PublicKeyCert(cert.toDER(), certChain.map { it.toDER() }))
         )
     }
 
-    private fun generateDeviceRootKey() {
+    private fun generateDeviceRootKey(
+        serverNonce: ByteArray
+    ) {
 
         log.v_header("key generation")
 
@@ -133,24 +146,27 @@ class Fluid {
             .setCertificateNotAfter(validTo.time)
             .setKeySize(keySize) // 4096 => not supported by low power key operation suite
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
+            .setAttestationChallenge(serverNonce)
             .build()
 
         // log.v("KeySpec.isStrongBoxBacked", keySpec.isStrongBoxBacked)
 
         keyGenerator.initialize(keySpec)
 
-        var sum: Long = 0
-        val count = 1
-        for (i in 1..count) {
-            val keyGenDurationMS = measureTimeMillis {
-                val keyPair = keyGenerator.generateKeyPair()
-            }
-            sum += keyGenDurationMS
-            log.v("$i generation of $keySize bit RSA keypair took $keyGenDurationMS ms")
-        }
+        keyGenerator.generateKeyPair()
 
-        var avg = sum / count
-        log.v("avg over $count $avg ms")
+//        var sum: Long = 0
+//        val count = 1
+//        for (i in 1..count) {
+//            val keyGenDurationMS = measureTimeMillis {
+//                val keyPair = keyGenerator.generateKeyPair()
+//            }
+//            sum += keyGenDurationMS
+//            log.v("$i generation of $keySize bit RSA keypair took $keyGenDurationMS ms")
+//        }
+//
+//        var avg = sum / count
+//        log.v("avg over $count $avg ms")
 
         // retrieve from KeyStore as if we didn't already have a reference
     }
@@ -171,7 +187,8 @@ class Fluid {
 
         val initialized = initializeKeystore()
 
-        generateDeviceRootKey()
+        val serverChallenge = RNG.bytes(8)
+        generateDeviceRootKey(serverChallenge)
 
         return this
     }
