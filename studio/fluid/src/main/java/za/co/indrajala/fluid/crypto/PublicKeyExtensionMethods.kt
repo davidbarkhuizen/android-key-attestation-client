@@ -1,5 +1,6 @@
 package za.co.indrajala.fluid.crypto
 
+import za.co.indrajala.fluid.ubyte.toHex
 import java.security.PublicKey
 
 fun PublicKey.describe() : String =

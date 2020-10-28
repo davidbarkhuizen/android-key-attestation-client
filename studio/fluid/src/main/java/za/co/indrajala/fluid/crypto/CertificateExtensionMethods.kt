@@ -1,6 +1,7 @@
 package za.co.indrajala.fluid.crypto
 
 import android.util.Base64
+import za.co.indrajala.fluid.ubyte.toHex
 import java.security.cert.Certificate
 
 // online parser @ https://www.sslshopper.com/certificate-decoder.html

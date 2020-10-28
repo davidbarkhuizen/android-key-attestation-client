@@ -6,6 +6,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import com.google.gson.Gson
+import za.co.indrajala.fluid.asn1.ASN1
 import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.http.HTTP
 import za.co.indrajala.fluid.model.PublicKeyCert
@@ -17,7 +18,6 @@ import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.cert.Certificate
 import javax.security.auth.x500.X500Principal
-import kotlin.system.measureTimeMillis
 
 class Fluid {
 

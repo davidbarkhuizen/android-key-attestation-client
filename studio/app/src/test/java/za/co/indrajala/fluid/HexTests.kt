@@ -2,10 +2,10 @@ package za.co.indrajala.fluid
 
 import org.junit.Assert
 import org.junit.Test
-import za.co.indrajala.fluid.crypto.toHex
-import za.co.indrajala.fluid.crypto.toUBytes
+import za.co.indrajala.fluid.ubyte.toHex
+import za.co.indrajala.fluid.ubyte.toUBytes
 
-class HexTest {
+class HexTests {
 
     @Test
     fun conversion_roundtrip() {
