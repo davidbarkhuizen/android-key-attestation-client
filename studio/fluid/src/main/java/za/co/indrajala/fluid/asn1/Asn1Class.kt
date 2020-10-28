@@ -9,9 +9,8 @@ enum class Asn1Class (val value: UByte) {
 
     companion object {
         private val map = Asn1Class.values().associateBy(Asn1Class::value)
-        fun fromValue(value: UByte): Asn1Class? {
-            println(value)
-            return map[value]
+        fun fromValue(value: UByte): Asn1Class {
+            return map[value] ?: error("$value")
         }
     }
 }

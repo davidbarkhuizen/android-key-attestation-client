@@ -6,7 +6,7 @@ fun ByteArray.toHex() =
 fun UByteArray.toHex() =
     this.joinToString("") { it.toString(16).padStart(2, '0') }
 
-fun String.toUBytes (): UByteArray =
+fun String.hexToUBytes (): UByteArray =
     Hex.validate(this)
         .chunked(2)
         .map { it.toUByte(16) }

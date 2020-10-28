@@ -1,6 +1,6 @@
 package za.co.indrajala.fluid.asn1
 
-import za.co.indrajala.fluid.ubyte.toUBytes
+import za.co.indrajala.fluid.ubyte.hexToUBytes
 
 class DER {
 
@@ -8,7 +8,7 @@ class DER {
 
         fun parseIdentifierBytes(hex: String): IdentifierOctet {
 
-            val ido = IdentifierOctet(hex.toUBytes()[0], true)
+            val ido = IdentifierOctet(hex.hexToUBytes()[0], true)
             return ido
         }
 
