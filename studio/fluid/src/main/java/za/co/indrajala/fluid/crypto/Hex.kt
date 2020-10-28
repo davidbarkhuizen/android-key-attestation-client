@@ -6,10 +6,16 @@ fun ByteArray.toHex() =
 fun UByteArray.toHex() =
     this.joinToString("") { it.toString(16).padStart(2, '0') }
 
+fun String.toUBytes (): UByteArray =
+    Hex.validate(this)
+        .chunked(2)
+        .map { it.toUByte(16) }
+        .toUByteArray()
+
 class Hex {
     companion object {
 
-        private val ubyteMap: Map<Char, UByte> = mapOf(
+        val uByteMap: Map<Char, UByte> = mapOf(
             '0' to 0.toUByte(),
             '1' to 1.toUByte(),
             '2' to 2.toUByte(),
@@ -28,35 +34,13 @@ class Hex {
             'F' to 15.toUByte()
         )
 
-        fun validate(hex: String){
+        fun validate(hex: String): String {
             if (hex.length % 2 != 0)
                 throw IllegalArgumentException("odd length ${hex.length}")
-        }
 
-        fun clean(hex: String) =
-            hex.toUpperCase()
+            // TODO check for illegal chars
 
-        fun toUBytes (hex: String): UByteArray {
-            validate(hex)
-
-            return clean(hex)
-                .chunked(2)
-                .map {
-
-                    val i = ubyteMap[it[0]]!!
-                    val j = ubyteMap[it[1]]!!
-
-                    val ii = i * 16.toUByte()
-                    val iii = ii.toUByte()
-
-                    val x = iii + j
-
-                    x
-                }
-                .map {
-                    it.toUByte()
-                }
-                .toUByteArray()
+            return hex
         }
     }
 }
