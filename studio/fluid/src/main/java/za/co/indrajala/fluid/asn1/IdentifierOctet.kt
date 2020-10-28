@@ -1,5 +1,6 @@
 package za.co.indrajala.fluid.asn1
 
+import za.co.indrajala.fluid.ubyte.UByteMask
 import za.co.indrajala.fluid.ubyte.shl
 
 class IdentifierOctet(val b: UByte, val isLeading: Boolean) {
@@ -15,7 +16,17 @@ class IdentifierOctet(val b: UByte, val isLeading: Boolean) {
     // 8        continues in next octet
     // 7...1    tag number (0...127)
 
+    val asn1Class: Asn1Class
+
     init {
-        val id = b.shl(1)
+
+        println("b $b ${b.toString(radix = 2)}")
+        val v = (b and UByteMask(8,7))
+        println("v $v ${v.toString(radix = 2)}")
+
+        val z = v.shl(2)
+        println("z $z ${z.toString(radix = 2)}")
+
+        asn1Class = Asn1Class.fromValue(z)!!
     }
 }

@@ -2,7 +2,11 @@ package za.co.indrajala.fluid
 
 import org.junit.Assert
 import org.junit.Test
+import za.co.indrajala.fluid.asn1.ASN1
+import za.co.indrajala.fluid.asn1.Asn1Class
 import za.co.indrajala.fluid.asn1.DER
+import za.co.indrajala.fluid.asn1.IdentifierOctet
+import za.co.indrajala.fluid.ubyte.shl
 
 class DerTests {
 
@@ -11,14 +15,21 @@ class DerTests {
     }
 
     @Test
+    fun parseIdentifierBytes() {
+
+        val z = IdentifierOctet((128 + 64).toUByte(), true)
+        Assert.assertEquals(z.asn1Class, Asn1Class.Private)
+    }
+
+    @Test
     fun parse() {
         DER.parse("01")
-        DER.parse("02")
-        DER.parse("03")
-        DER.parse("08")
-        DER.parse("09")
-        DER.parse("A0")
-        DER.parse("FF")
+//        DER.parse("02")
+//        DER.parse("03")
+//        DER.parse("08")
+//        DER.parse("09")
+//        DER.parse("A0")
+//        DER.parse("FF")
         Assert.assertEquals(true, true)
     }
 }

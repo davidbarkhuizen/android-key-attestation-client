@@ -2,10 +2,11 @@ package za.co.indrajala.fluid
 
 import org.junit.Assert
 import org.junit.Test
+import za.co.indrajala.fluid.ubyte.UByteMask
 import za.co.indrajala.fluid.ubyte.shl
 import za.co.indrajala.fluid.ubyte.shr
 
-class ShlShrTests {
+class BitWiseTests {
 
     // assuming BE, i.e. 87654321, and not 12345678
 
@@ -21,11 +22,24 @@ class ShlShrTests {
         Assert.assertEquals(one.shl(6), 64.toUByte())
         Assert.assertEquals(one.shl(7), 128.toUByte())
         Assert.assertEquals(one.shl(8), 1.toUByte())
+
+        val three = 3.toUByte()
+        Assert.assertEquals(three.shl(2), 12.toUByte())
     }
 
     @Test
     fun shr() {
         val one = 1.toUByte()
         Assert.assertEquals(one.shr(1), 128.toUByte())
+
+        val three = 3.toUByte()
+        Assert.assertEquals(three.shr(2), (128 + 64).toUByte())
+    }
+
+    @Test
+    fun mask() {
+        val twoFiveFive = 255.toUByte()
+        Assert.assertEquals(127.toUByte(), UByteMask(1,2,3,4,5,6,7) and twoFiveFive)
+        Assert.assertEquals(128.toUByte(), UByteMask(8) and twoFiveFive)
     }
 }
