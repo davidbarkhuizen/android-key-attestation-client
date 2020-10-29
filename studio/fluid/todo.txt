@@ -1,0 +1,3 @@
+// TODO minimum version check
+// TODO root check
+// TODO instrumentation check

@@ -4,13 +4,16 @@ import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyProperties
 import java.math.BigInteger
 
-data class AsymKeyParams(
-    val keySizeBits: Int,
-    val usages: KeyPurpose,
+class AsymKeyParams(
     val subjectCommonName: String,
-    val certSN: BigInteger,
-    val permittedDigest: String,
-    val signaturePadding: String,
+    certSN: Long,
+    val keySizeBits: Int,
+    val purpose: KeyPurpose,
+    val digest: String,
+    val signaturePadding: String? = null,
+    val encryptionPadding: String? = null,
     val validFrom: GregorianCalendar,
     val validTo: GregorianCalendar
-)
+) {
+    val certSN: BigInteger = BigInteger.valueOf(certSN)
+}

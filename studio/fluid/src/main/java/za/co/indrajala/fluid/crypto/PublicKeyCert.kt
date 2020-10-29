@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.model
+package za.co.indrajala.fluid.crypto
 
 data class PublicKeyCert(
     val asn1hex: String? = null,

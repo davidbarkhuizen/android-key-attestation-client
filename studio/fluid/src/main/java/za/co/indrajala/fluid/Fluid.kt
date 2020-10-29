@@ -14,31 +14,38 @@ class Fluid {
 
     private var initialized = false
 
-    private fun fingerprintDevice() {
-        log.v_header("device fingerprint")
-
-        val apiLevel = android.os.Build.VERSION.SDK_INT
-        log.v("Android API level", apiLevel)
+    private fun fingerprintDevice(): DeviceFingerprint {
+        return DeviceFingerprint(
+            android.os.Build.VERSION.SDK_INT
+        )
     }
 
     fun test() {
-        FluidKeyStore.attestPublicKey(FluidKeyStore.DEVICE_ROOT_KEY_ALIAS)
+        FluidKeyStore.attestDeviceRootKey()
     }
 
     fun init(): Fluid {
-        log.v("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd")
+        log.v_header("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd", 80, '=')
 
         if (initialized) {
             log.v("the Fluid module has already initialized!")
             return this
         }
 
-        fingerprintDevice()
+        log.v_header("device fingerprint")
+        val deviceFingerprint = fingerprintDevice()
+        log.v(deviceFingerprint.toString())
 
-        val initialized = FluidKeyStore.initialize()
+        val keystoreInitialized = FluidKeyStore.initialize()
 
         val serverChallenge = RNG.bytes(8)
-        FluidKeyStore.generateDeviceRootKey(serverChallenge)
+
+        val generatedDeviceRootKey = FluidKeyStore.generateDeviceRootKey(
+            serialNumber = 0,
+            serverNonce = serverChallenge,
+            lifeTimeMinutes = 60*24,
+            sizeInBits = 2048
+        )
 
         return this
     }
