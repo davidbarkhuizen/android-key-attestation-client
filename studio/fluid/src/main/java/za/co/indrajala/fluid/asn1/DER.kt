@@ -125,8 +125,6 @@ class DER {
                 println(longTag)
             }
 
-            println("remainder ${remainder.map { it.toString(16) }.joinToString("")}")
-
             // parse length bytes
 
             val firstLengthByte = remainder[0]

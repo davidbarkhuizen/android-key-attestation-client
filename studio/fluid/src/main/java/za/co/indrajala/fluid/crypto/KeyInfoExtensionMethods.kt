@@ -2,7 +2,7 @@ package za.co.indrajala.fluid.crypto
 
 import android.security.keystore.KeyInfo
 
-fun KeyInfo.describe() : String =
+fun KeyInfo.summary() : String =
     listOf(
         "alias: $keystoreAlias",
         "size (bits): $keySize",
