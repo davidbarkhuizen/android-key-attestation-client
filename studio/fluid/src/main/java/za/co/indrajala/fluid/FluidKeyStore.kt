@@ -3,20 +3,24 @@ package za.co.indrajala.fluid
 import android.icu.util.Calendar
 import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
-import com.google.gson.Gson
+import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.x509.CertificatePolicies
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.PolicyInformation
+import org.bouncycastle.x509.extension.X509ExtensionUtil
 import za.co.indrajala.fluid.asn1.ASN1
 import za.co.indrajala.fluid.crypto.*
-import za.co.indrajala.fluid.http.HTTP
-import za.co.indrajala.fluid.model.PublicKeyCert
 import za.co.indrajala.fluid.util.log
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.math.BigInteger
-import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.cert.Certificate
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 
 class FluidKeyStore {
@@ -60,14 +64,6 @@ class FluidKeyStore {
         ) {
             log.v_header("attesting public key with alias $alias")
 
-//            val entry = ks!!.getEntry(alias, null)
-//
-//            val privateKey = (entry as KeyStore.PrivateKeyEntry).privateKey
-//            val keyFactory = KeyFactory.getInstance(privateKey.algorithm, ANDROID_KEY_STORE_NAME)
-//
-//            val pvtKeyInfo = keyFactory.getKeySpec(privateKey, KeyInfo::class.java)
-//            log.v(pvtKeyInfo.summary())
-
             val cert: Certificate = ks!!.getCertificate(alias)
             log.v(".PEM: B64")
             log.v(cert.toPEM())
@@ -81,24 +77,48 @@ class FluidKeyStore {
 
             val certChain = ks!!.getCertificateChain(alias)
 
-            log.v("attestation chain - ${certChain.size} links");
+            log.v("attestation chain contains ${certChain.size} certificates");
             certChain.forEachIndexed { i, it ->
-                log.v_header("CHAIN KEY $i")
-                log.v(it.toDER())
-                log.v(it.toPEM())
+                val der = it.toDER()
+                log.v("$i (len ${der.length / 2}) $der")
             }
 
-            HTTP.post(
-                "http://192.168.8.103:8777/device/register",
-                Gson().toJson(PublicKeyCert(cert.toDER(), certChain.map { it.toDER() }))
-            )
+            // ------------------------------
+
+            val googleRoots = certChain
+                .filter { rootCert-> GoogleHardwareAttestation.rootCertsDER.count { it == rootCert.toDER() } > 0 }
+
+            log.v("${googleRoots.size} matching google hardware attestation root cert(s)")
+            googleRoots.forEach {
+                log.v(it.toDER())
+            }
+
+            check(googleRoots.size == 1, { println("should have one and only one matching root") })
+
+            val certFactory = CertificateFactory.getInstance("X.509");
+            val rootCert = certFactory.generateCertificate(ByteArrayInputStream(certChain[0].toPEM().toByteArray())) as X509Certificate
+
+            val attestation = rootCert.getExtensionValue("1.3.6.1.4.1.11129.2.1.17")
+            if (attestation != null) {
+                log.v("GOTCHA")
+                attestation.
+
+                val policyInformation = policies.policyInformation.forEach {
+                    val policyQualifiers =  it.policyQualifiers.getObjectAt  (0) as ASN1Sequence
+                    System.out.println(policyQualifiers.getObjectAt(1)); // aaa.bbb
+                }
+            }
+
+//            HTTP.post(
+//                "http://192.168.8.103:8777/device/register",
+//                Gson().toJson(PublicKeyCert(cert.toDER(), certChain.map { it.toDER() }))
+//            )
         }
 
         fun generateDeviceRootKey(
             serverNonce: ByteArray
         ) {
-
-            log.v_header("key generation")
+            log.v("generating key...")
 
             val validFrom = GregorianCalendar()
 
@@ -118,10 +138,6 @@ class FluidKeyStore {
                 validTo
             )
 
-            val keyGenerator = KeyPairGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE_NAME
-            )
-
             val keySpec = KeyGenParameterSpec
                 .Builder(DEVICE_ROOT_KEY_ALIAS, params.usages.purpose)
                 .setCertificateSubject(X500Principal("CN=${params.subjectCommonName}"))
@@ -137,9 +153,14 @@ class FluidKeyStore {
 
             // log.v("KeySpec.isStrongBoxBacked", keySpec.isStrongBoxBacked)
 
-            keyGenerator.initialize(keySpec)
+            val keyGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE_NAME
+            )
 
+            keyGenerator.initialize(keySpec)
             keyGenerator.generateKeyPair()
+
+            log.v("generated.")
         }
     }
 }
