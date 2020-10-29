@@ -8,7 +8,9 @@ class DER {
 
     companion object {
 
-        fun parse(hex: String): Boolean {
+        fun parse(hex: String) {
+
+            println("raw: $hex")
 
             val raw = hex.hexToUBytes()
 
@@ -89,7 +91,7 @@ class DER {
             println(if (longFormLength) "long form length" else "short form length")
 
             val length: ULong = if (!longFormLength) {
-                firstLengthByte.getStandAloneBitsValue().toULong()
+                firstLengthByte.getStandAloneBitsValue(1,2,3,4,5,6,7).toULong()
             } else {
                 val numberOfSubsequentLengthBytes = firstLengthByte.getStandAloneBitsValue(1,2,3,4,5,6,7).toInt()
 
@@ -107,7 +109,23 @@ class DER {
 
             println("length $length")
 
-            return false
+            val content = remainder.take(length.toInt())
+            val contentHex = content.joinToString(separator = "", transform = { it.toString(16).padStart(2, '0') })
+
+            remainder = remainder.takeLast(remainder.size - length.toInt())
+
+            if (construction == Asn1Construction.Constructed) {
+                println("parsing next layer of constructed element")
+                println("-".repeat(60))
+                parse(contentHex)
+            } else {
+                println("content: $contentHex")
+            }
+
+            println("=".repeat(60))
+            if (remainder.isNotEmpty()) {
+                parse(remainder.joinToString(separator = "", transform = { it.toString(16).padStart(2, '0') }))
+            }
         }
     }
 }

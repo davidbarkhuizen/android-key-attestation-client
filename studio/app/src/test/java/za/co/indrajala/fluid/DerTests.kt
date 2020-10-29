@@ -38,9 +38,9 @@ class DerTests {
         //    2 subsequent length bytes
         //    length 435
         //
-        DER.parse("308201B3")
-
-        println("*".repeat(60))
+//        DER.parse("308201B3")
+//
+//        println("*".repeat(60))
 
         DER.parse(certHex)
 
