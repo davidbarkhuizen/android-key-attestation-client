@@ -24,12 +24,16 @@ class DER {
 
             // TODO validate that construction is permitted for tag
 
-            val initialOctetTag = Asn1Tag.fromValue(b.getStandAloneBitsValue(1,2,3,4,5))
+            val initialOctetTag = Asn1Tag.fromValue(b.getStandAloneBitsValue(1,2,3,4,5).toULong())
             println("initialTagOctet $initialOctetTag")
 
             var remainder: List<UByte> = raw.takeLast(raw.size - 1)
 
-            if (initialOctetTag.value == 31.toUByte()) {
+            var longTag: Asn1Tag? = null
+
+            // parse long tag if required
+            //
+            if (initialOctetTag.value == 31.toULong()) {
                 // ==> tag coded over one or more subsequent bytes
 
                 var subsequentIdentifierTagBytes: ArrayList<UByte> = arrayListOf()
@@ -68,9 +72,40 @@ class DER {
 
                 val tagNumber = tagBitsPackedToNearestByte.toULong(radix = 2)
                 println("tagNumber $tagNumber")
+
+                longTag = Asn1Tag.fromValue(tagNumber)
+                println(longTag)
             }
 
             println("remainder ${remainder.map { it.toString(16) }.joinToString("")}")
+
+            // parse length bytes
+
+            val firstLengthByte = remainder[0]
+            remainder = remainder.takeLast(remainder.size - 1)
+
+            val longFormLength = firstLengthByte.bitsAreSet(8)
+
+            println(if (longFormLength) "long form length" else "short form length")
+
+            val length: ULong = if (!longFormLength) {
+                firstLengthByte.getStandAloneBitsValue().toULong()
+            } else {
+                val numberOfSubsequentLengthBytes = firstLengthByte.getStandAloneBitsValue(1,2,3,4,5,6,7).toInt()
+
+                println("$numberOfSubsequentLengthBytes subsequent length bytes")
+
+                val lengthBytes = remainder.take(numberOfSubsequentLengthBytes)
+
+                remainder = remainder.takeLast(remainder.size - numberOfSubsequentLengthBytes)
+
+                lengthBytes
+                    .map { it.toString(16).padStart(2, '0') }
+                    .joinToString("")
+                    .toULong(16)
+            }
+
+            println("length $length")
 
             return false
         }
