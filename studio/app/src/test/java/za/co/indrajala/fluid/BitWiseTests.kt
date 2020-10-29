@@ -2,7 +2,7 @@ package za.co.indrajala.fluid
 
 import org.junit.Assert
 import org.junit.Test
-import za.co.indrajala.fluid.ubyte.UByteMask
+import za.co.indrajala.fluid.ubyte.uByteMask
 import za.co.indrajala.fluid.ubyte.shl
 import za.co.indrajala.fluid.ubyte.shr
 
@@ -39,7 +39,7 @@ class BitWiseTests {
     @Test
     fun mask() {
         val twoFiveFive = 255.toUByte()
-        Assert.assertEquals(127.toUByte(), UByteMask(1,2,3,4,5,6,7) and twoFiveFive)
-        Assert.assertEquals(128.toUByte(), UByteMask(8) and twoFiveFive)
+        Assert.assertEquals(127.toUByte(), uByteMask(1,2,3,4,5,6,7) and twoFiveFive)
+        Assert.assertEquals(128.toUByte(), uByteMask(8) and twoFiveFive)
     }
 }
