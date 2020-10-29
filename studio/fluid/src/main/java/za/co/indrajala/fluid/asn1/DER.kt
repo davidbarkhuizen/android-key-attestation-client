@@ -8,6 +8,53 @@ class DER {
 
     companion object {
 
+        fun parseOID(bytes: UByteArray) {
+
+            val firstByte = bytes[0]
+            println(firstByte.toString(16))
+
+            val firstNodeValue = firstByte / 40.toUByte()
+            val secondNodeValue = firstByte - (firstNodeValue * 40.toUInt())
+
+            println("OID: ${firstNodeValue}.${secondNodeValue}")
+
+            var remainder = bytes.map { it }.takeLast(bytes.size - 1)
+
+            while (remainder.isNotEmpty()) {
+
+                val isLongForm = remainder[0].bitsAreSet(8)
+
+                if (!isLongForm) {
+                    println(".${remainder[0]}")
+                    remainder = remainder.takeLast(remainder.size - 1)
+                } else {
+
+                    val head = remainder.takeWhile { it.bitsAreSet(8) }.toTypedArray()
+
+                    val unpacked = listOf(
+                        *head,
+                        remainder[head.size]
+                    ).map { it.toString(radix = 2).padStart(8, '0').takeLast(7) }
+                        //.asReversed()
+                        .joinToString("")
+
+                    remainder = remainder.takeLast(remainder.size - (head.size + 1))
+
+                    val packed =
+                        if (unpacked.length % 8 == 0)
+                            unpacked
+                        else
+                            "0".repeat(8 - (unpacked.length % 8)) + unpacked
+
+                    println("packed, $packed")
+
+                    val oid = packed.toULong(radix = 2)
+                    println("OID .$oid")
+
+                }
+            }
+        }
+
         fun parse(hex: String) {
 
             println("raw: $hex")
@@ -120,6 +167,10 @@ class DER {
                 parse(contentHex)
             } else {
                 println("content: $contentHex")
+
+                if (initialOctetTag == Asn1Tag.object_identifier) {
+                    parseOID(contentHex.hexToUBytes())
+                }
             }
 
             println("=".repeat(60))
