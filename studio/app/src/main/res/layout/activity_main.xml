@@ -13,7 +13,7 @@
         android:gravity="center">
         <ImageView android:layout_width="wrap_content"
             android:id="@+id/logoImageView"
-            android:src="@mipmap/ic_launcher"
+            android:src="@drawable/fluid_logo_colour"
             android:layout_height="wrap_content"
             android:scaleType="centerInside"
             android:onClick="onClick"
