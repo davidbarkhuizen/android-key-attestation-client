@@ -16,7 +16,7 @@ class DER {
             val firstNodeValue = firstByte / 40.toUByte()
             val secondNodeValue = firstByte - (firstNodeValue * 40.toUInt())
 
-            println("OID: ${firstNodeValue}.${secondNodeValue}")
+            val nodes = arrayListOf<ULong>(firstNodeValue.toULong(), secondNodeValue.toULong())
 
             var remainder = bytes.map { it }.takeLast(bytes.size - 1)
 
@@ -25,7 +25,7 @@ class DER {
                 val isLongForm = remainder[0].bitsAreSet(8)
 
                 if (!isLongForm) {
-                    println(".${remainder[0]}")
+                    nodes.add(remainder[0].toULong())
                     remainder = remainder.takeLast(remainder.size - 1)
                 } else {
 
@@ -46,13 +46,12 @@ class DER {
                         else
                             "0".repeat(8 - (unpacked.length % 8)) + unpacked
 
-                    println("packed, $packed")
-
                     val oid = packed.toULong(radix = 2)
-                    println("OID .$oid")
-
+                    nodes.add(oid)
                 }
             }
+
+            println("OID: ${nodes.joinToString(".")}")
         }
 
         fun parse(hex: String) {
