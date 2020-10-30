@@ -21,7 +21,7 @@ class Fluid {
     }
 
     fun test() {
-        FluidKeyStore.attestDeviceRootKey()
+        FluidKeyStore.attestFluidDeviceRootKey()
     }
 
     fun init(): Fluid {
@@ -46,6 +46,8 @@ class Fluid {
             lifeTimeMinutes = 60*24,
             sizeInBits = 2048
         )
+
+        FluidKeyStore.attestFluidDeviceRootKey()
 
         return this
     }

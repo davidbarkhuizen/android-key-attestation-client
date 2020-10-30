@@ -4,7 +4,11 @@ import android.icu.util.Calendar
 import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import za.co.indrajala.fluid.asn1.ASN1
+import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.ASN1OctetString
+import org.bouncycastle.asn1.ASN1Sequence
+import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.attestation.AttConst
 import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.util.log
 import java.io.ByteArrayInputStream
@@ -14,7 +18,6 @@ import java.security.KeyStoreException
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.security.spec.AlgorithmParameterSpec
 import javax.security.auth.x500.X500Principal
 
 class FluidKeyStore {
@@ -22,6 +25,8 @@ class FluidKeyStore {
 
         private const val ANDROID_KEYSTORE_TYPE = "AndroidKeyStore"
         private const val ANDROID_KEYSTORE_NAME = "AndroidKeyStore"
+
+        private const val oidAttestationExtension = "1.3.6.1.4.1.11129.2.1.17"
 
         const val DEVICE_ROOT_KEYSTORE_ALIAS = "fluid.device.key"
 
@@ -53,7 +58,7 @@ class FluidKeyStore {
             }
         }
 
-        fun attestDeviceRootKey(
+        fun attestFluidDeviceRootKey(
         ) {
             log.v_header("device root key attestation")
 
@@ -72,12 +77,28 @@ class FluidKeyStore {
 
             val certChain = ks!!.getCertificateChain(DEVICE_ROOT_KEYSTORE_ALIAS)
 
+            val certFactory = CertificateFactory.getInstance("X.509");
+
             log.v("attestation chain for fluid device root key contains ${certChain.size} certificates:");
             certChain.forEachIndexed { i, it ->
                 val der = it.toDER()
-                log.v("$i (len ${der.length / 2}) $der")
+                val pem = it.toPEM()
+
+                val x509 = certFactory.generateCertificate(
+                    (ByteArrayInputStream(pem.toByteArray()))
+                ) as X509Certificate
+
+                val subAltNames = x509.subjectAlternativeNames
+
+                val subjectName = x509.subjectDN.name
+
+                log.v("$i (len ${der.length / 2}) $subjectName $der")
             }
 
+            // ------------------------------
+
+            val indexOfDeviceRootKeyCert =  certChain.indexOfFirst { it.toDER() == cert.toDER() }
+            log.v("fluid device root key is $indexOfDeviceRootKeyCert in the chain")
             // ------------------------------
 
             log.v("checking against ${GoogleHardwareAttestation.rootCertsDER.size} currently valid known google root certs...")
@@ -92,24 +113,37 @@ class FluidKeyStore {
 
             check(googleRoots.size == 1, { println("should have one and only one matching root") })
 
-            val certFactory = CertificateFactory.getInstance("X.509");
+            val googleRootCert = googleRoots[0]!!
 
-            val attestationCerts = certChain.map {
-                certFactory.generateCertificate(
-                    (ByteArrayInputStream(certChain[0].toPEM().toByteArray()))
-                ) as X509Certificate
-            }.filter {
-                val attestation = it.getExtensionValue("1.3.6.1.4.1.11129.2.1.17")
-                (attestation != null)
-            }
+            val indexOfGoogleRootKeyCert =  certChain.indexOfFirst { it.toDER() == googleRootCert.toDER() }
+            log.v("google root key is $indexOfGoogleRootKeyCert in the chain")
 
-            log.v("${attestationCerts.size} certs with attestation data in chain")
+            val attestationCerts = certChain
+                .map {
+                    certFactory.generateCertificate(
+                        (ByteArrayInputStream(certChain[0].toPEM().toByteArray()))
+                    ) as X509Certificate
+                }
+                .forEach {
+                    val attExtBytes = it.getExtensionValue(oidAttestationExtension)
 
+                    if ((attExtBytes == null) || attExtBytes.isEmpty()) {
+                        return
+                    }
 
-//                val policyInformation = policies.policyInformation.forEach {
-//                    val policyQualifiers =  it.policyQualifiers.getObjectAt  (0) as ASN1Sequence
-//                    System.out.println(policyQualifiers.getObjectAt(1)); // aaa.bbb
-//                }
+                    val derSeqBytes = (ASN1InputStream(attExtBytes).readObject() as ASN1OctetString).octets
+                    val decodedSeq = ASN1InputStream(derSeqBytes).readObject() as ASN1Sequence
+
+                    val attVer = decodedSeq.getObjectAt(AttConst.ATTESTATION_VERSION_INDEX).getInt()
+                    val attSecLevel = decodedSeq.getObjectAt(AttConst.ATTESTATION_SECURITY_LEVEL_INDEX).getInt()
+                    val kmVer = decodedSeq.getObjectAt(AttConst.KEYMASTER_VERSION_INDEX).getInt()
+                    val kmSecLevel = decodedSeq.getObjectAt(AttConst.KEYMASTER_SECURITY_LEVEL_INDEX).getInt()
+
+                    log.v("Attestation: Version $attVer, Sec Level $attSecLevel")
+                    log.v("KeyMaster: Version $kmVer, Sec Level $kmSecLevel")
+                }
+
+            //log.v("${attestationCerts.size} certs with attestation data in chain")
 
 //            HTTP.post(
 //                "http://192.168.8.103:8777/device/register",

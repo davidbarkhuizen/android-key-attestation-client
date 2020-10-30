@@ -76,3 +76,14 @@ AES|128,256
 ECDSA|P-256
 HMAC-SHA256|64 - 512 (8 - 64 bytes)
 Triple DES|168
+
+-------------------
+
+1.2.840.113549.1.1.11     sha256WithRSAEncryption   PKCS #1       
+2.5.4.5                   serialNumber              X.520 DN component    printable string
+2.5.4.3                   commonName                X.520 DN component    utf8 string
+
+
+
+
+
