@@ -20,7 +20,6 @@ fun ASN1Encodable.getBigInt(): BigInteger =
 fun ASN1Encodable.getInt(): Int =
     this.getBigInt().toInt()
 
-
 fun ASN1Encodable.getBytes(): ByteArray =
     when (this) {
         is ASN1OctetString -> this.octets
