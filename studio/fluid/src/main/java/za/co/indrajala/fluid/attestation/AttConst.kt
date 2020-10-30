@@ -3,15 +3,6 @@ package za.co.indrajala.fluid.attestation
 class AttConst {
     companion object {
 
-        val ATTESTATION_VERSION_INDEX = 0
-        val ATTESTATION_SECURITY_LEVEL_INDEX = 1
-        val KEYMASTER_VERSION_INDEX = 2
-        val KEYMASTER_SECURITY_LEVEL_INDEX = 3
-        val ATTESTATION_CHALLENGE_INDEX = 4
-        val UNIQUE_ID_INDEX = 5
-        val SW_ENFORCED_INDEX = 6
-        val TEE_ENFORCED_INDEX = 7
-
         // Authorization list tags. The list is in this AOSP file:
         // hardware/libhardware/include/hardware/keymaster_defs.h
         val KM_TAG_PURPOSE = 1

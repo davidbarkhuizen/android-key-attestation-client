@@ -117,13 +117,13 @@ class FluidKeyStore {
             val indexOfGoogleRootKeyCert =  certChain.indexOfFirst { it.toDER() == googleRootCert.toDER() }
             log.v("google root key is $indexOfGoogleRootKeyCert in the chain")
 
-            val attestationCerts = certChain
-                .forEach {
-                    KeyDescription
-                        .fromX509Cert(X509.fromPEM(it.toPEM()))!!
-                        .summary()
-                        .forEach { log.v(it) }
-
+            certChain
+                .map { X509.fromPEM(cert.toPEM()) }
+                .map { KeyDescription.fromX509Cert(it) }
+                .filterNotNull()
+                .forEachIndexed { index, item ->
+                    log.v_header("CERT $index")
+                    item.summary().forEach { line -> log.v(line) }
                 }
 
 //            HTTP.post(

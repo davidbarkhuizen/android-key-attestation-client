@@ -35,6 +35,19 @@ class KeyDescription(
 
         private const val ATT_EXT_OID = "1.3.6.1.4.1.11129.2.1.17"
 
+        class Indices {
+            companion object {
+                val ATTESTATION_VERSION_INDEX = 0
+                val ATTESTATION_SECURITY_LEVEL_INDEX = 1
+                val KEYMASTER_VERSION_INDEX = 2
+                val KEYMASTER_SECURITY_LEVEL_INDEX = 3
+                val ATTESTATION_CHALLENGE_INDEX = 4
+                val UNIQUE_ID_INDEX = 5
+                val SW_ENFORCED_INDEX = 6
+                val TEE_ENFORCED_INDEX = 7
+            }
+        }
+
         fun fromX509Cert(cert: X509Certificate): KeyDescription? {
 
             val attExtBytes = cert.getExtensionValue(ATT_EXT_OID)
@@ -52,12 +65,12 @@ class KeyDescription(
                 decodedSeq.getObjectAt(index).getBytes().toHex()
 
             return KeyDescription(
-                attestationVersion = getInt(AttConst.ATTESTATION_VERSION_INDEX),
-                attestationSecurityLevel = SecurityLevel.fromValue(getInt(AttConst.ATTESTATION_SECURITY_LEVEL_INDEX)),
-                keymasterVersion = getInt(AttConst.KEYMASTER_VERSION_INDEX),
-                keymasterSecurityLevel = SecurityLevel.fromValue(getInt(AttConst.KEYMASTER_SECURITY_LEVEL_INDEX)),
-                attestationChallenge = getHex(AttConst.ATTESTATION_CHALLENGE_INDEX),
-                uniqueId = getHex(AttConst.UNIQUE_ID_INDEX)
+                attestationVersion = getInt(Indices.ATTESTATION_VERSION_INDEX),
+                attestationSecurityLevel = SecurityLevel.fromValue(getInt(Indices.ATTESTATION_SECURITY_LEVEL_INDEX)),
+                keymasterVersion = getInt(Indices.KEYMASTER_VERSION_INDEX),
+                keymasterSecurityLevel = SecurityLevel.fromValue(getInt(Indices.KEYMASTER_SECURITY_LEVEL_INDEX)),
+                attestationChallenge = getHex(Indices.ATTESTATION_CHALLENGE_INDEX),
+                uniqueId = getHex(Indices.UNIQUE_ID_INDEX)
             )
         }
     }
