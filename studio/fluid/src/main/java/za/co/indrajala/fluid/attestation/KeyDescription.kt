@@ -5,6 +5,7 @@ import org.bouncycastle.asn1.ASN1OctetString
 import org.bouncycastle.asn1.ASN1Sequence
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.attestation.authlist.AuthorizationList
 import za.co.indrajala.fluid.ubyte.toHex
 import java.security.cert.X509Certificate
 
