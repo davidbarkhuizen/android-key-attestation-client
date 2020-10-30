@@ -77,11 +77,215 @@ ECDSA|P-256
 HMAC-SHA256|64 - 512 (8 - 64 bytes)
 Triple DES|168
 
--------------------
+## Relevant ASN.1 X.509 Object Identifiers (OIDs)
 
 1.2.840.113549.1.1.11     sha256WithRSAEncryption   PKCS #1       
 2.5.4.5                   serialNumber              X.520 DN component    printable string
 2.5.4.3                   commonName                X.520 DN component    utf8 string
+
+## Google Key Attestation
+
+### Attestation X.509 Cert Extension Schemas
+
+#### Attestation v3 Schema
+
+```
+KeyDescription ::= SEQUENCE {
+    attestationVersion  3,
+    attestationSecurityLevel  SecurityLevel,
+    keymasterVersion  INTEGER,
+    keymasterSecurityLevel  SecurityLevel,
+    attestationChallenge  OCTET_STRING,
+    uniqueId  OCTET_STRING,
+    softwareEnforced  AuthorizationList,
+    teeEnforced  AuthorizationList,
+}
+
+SecurityLevel ::= ENUMERATED {
+    Software  (0),
+    TrustedEnvironment  (1),
+    StrongBox  (2),
+}
+
+AuthorizationList ::= SEQUENCE {
+    purpose  [1] EXPLICIT SET OF INTEGER OPTIONAL,
+    algorithm  [2] EXPLICIT INTEGER OPTIONAL,
+    keySize  [3] EXPLICIT INTEGER OPTIONAL,
+    digest  [5] EXPLICIT SET OF INTEGER OPTIONAL,
+    padding  [6] EXPLICIT SET OF INTEGER OPTIONAL,
+    ecCurve  [10] EXPLICIT INTEGER OPTIONAL,
+    rsaPublicExponent  [200] EXPLICIT INTEGER OPTIONAL,
+    rollbackResistance  [303] EXPLICIT NULL OPTIONAL,
+    activeDateTime  [400] EXPLICIT INTEGER OPTIONAL,
+    originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
+    usageExpireDateTime  [402] EXPLICIT INTEGER OPTIONAL,
+    noAuthRequired  [503] EXPLICIT NULL OPTIONAL,
+    userAuthType  [504] EXPLICIT INTEGER OPTIONAL,
+    authTimeout  [505] EXPLICIT INTEGER OPTIONAL,
+    allowWhileOnBody  [506] EXPLICIT NULL OPTIONAL,
+    trustedUserPresenceRequired  [507] EXPLICIT NULL OPTIONAL,
+    trustedConfirmationRequired  [508] EXPLICIT NULL OPTIONAL,
+    unlockedDeviceRequired  [509] EXPLICIT NULL OPTIONAL,
+    allApplications  [600] EXPLICIT NULL OPTIONAL,
+    applicationId  [601] EXPLICIT OCTET_STRING OPTIONAL,
+    creationDateTime  [701] EXPLICIT INTEGER OPTIONAL,
+    origin  [702] EXPLICIT INTEGER OPTIONAL,
+    rootOfTrust  [704] EXPLICIT RootOfTrust OPTIONAL,
+    osVersion  [705] EXPLICIT INTEGER OPTIONAL,
+    osPatchLevel  [706] EXPLICIT INTEGER OPTIONAL,
+    attestationApplicationId  [709] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdBrand  [710] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdDevice  [711] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdProduct  [712] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdSerial  [713] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdImei  [714] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdMeid  [715] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdManufacturer  [716] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdModel  [717] EXPLICIT OCTET_STRING OPTIONAL,
+    vendorPatchLevel  [718] EXPLICIT INTEGER OPTIONAL,
+    bootPatchLevel  [719] EXPLICIT INTEGER OPTIONAL,
+}
+
+RootOfTrust ::= SEQUENCE {
+    verifiedBootKey  OCTET_STRING,
+    deviceLocked  BOOLEAN,
+    verifiedBootState  VerifiedBootState,
+    verifiedBootHash OCTET_STRING,
+}
+
+VerifiedBootState ::= ENUMERATED {
+    Verified  (0),
+    SelfSigned  (1),
+    Unverified  (2),
+    Failed  (3),
+}
+```
+
+#### Attestation v2 Schema
+
+```
+KeyDescription ::= SEQUENCE {
+    attestationVersion  2,
+    attestationSecurityLevel  SecurityLevel,
+    keymasterVersion  INTEGER,
+    keymasterSecurityLevel  SecurityLevel,
+    attestationChallenge  OCTET_STRING,
+    uniqueId  OCTET_STRING,
+    softwareEnforced  AuthorizationList,
+    teeEnforced  AuthorizationList,
+}
+
+SecurityLevel ::= ENUMERATED {
+    Software  (0),
+    TrustedEnvironment  (1),
+}
+
+AuthorizationList ::= SEQUENCE {
+    purpose  [1] EXPLICIT SET OF INTEGER OPTIONAL,
+    algorithm  [2] EXPLICIT INTEGER OPTIONAL,
+    keySize  [3] EXPLICIT INTEGER OPTIONAL,
+    digest  [5] EXPLICIT SET OF INTEGER OPTIONAL,
+    padding  [6] EXPLICIT SET OF INTEGER OPTIONAL,
+    ecCurve  [10] EXPLICIT INTEGER OPTIONAL,
+    rsaPublicExponent  [200] EXPLICIT INTEGER OPTIONAL,
+    activeDateTime  [400] EXPLICIT INTEGER OPTIONAL,
+    originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
+    usageExpireDateTime  [402] EXPLICIT INTEGER OPTIONAL,
+    noAuthRequired  [503] EXPLICIT NULL OPTIONAL,
+    userAuthType  [504] EXPLICIT INTEGER OPTIONAL,
+    authTimeout  [505] EXPLICIT INTEGER OPTIONAL,
+    allowWhileOnBody  [506] EXPLICIT NULL OPTIONAL,
+    allApplications  [600] EXPLICIT NULL OPTIONAL,
+    applicationId  [601] EXPLICIT OCTET_STRING OPTIONAL,
+    creationDateTime  [701] EXPLICIT INTEGER OPTIONAL,
+    origin  [702] EXPLICIT INTEGER OPTIONAL,
+    rollbackResistant  [703] EXPLICIT NULL OPTIONAL,
+    rootOfTrust  [704] EXPLICIT RootOfTrust OPTIONAL,
+    osVersion  [705] EXPLICIT INTEGER OPTIONAL,
+    osPatchLevel  [706] EXPLICIT INTEGER OPTIONAL,
+    attestationApplicationId  [709] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdBrand  [710] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdDevice  [711] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdProduct  [712] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdSerial  [713] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdImei  [714] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdMeid  [715] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdManufacturer  [716] EXPLICIT OCTET_STRING OPTIONAL,
+    attestationIdModel  [717] EXPLICIT OCTET_STRING OPTIONAL,
+}
+
+RootOfTrust ::= SEQUENCE {
+    verifiedBootKey  OCTET_STRING,
+    deviceLocked  BOOLEAN,
+    verifiedBootState  VerifiedBootState,
+}
+
+VerifiedBootState ::= ENUMERATED {
+    Verified  (0),
+    SelfSigned  (1),
+    Unverified  (2),
+    Failed  (3),
+}
+```
+
+#### Attestation v1 Schema
+
+```
+KeyDescription ::= SEQUENCE {
+    attestationVersion  1,
+    attestationSecurityLevel  SecurityLevel,
+    keymasterVersion  INTEGER,
+    keymasterSecurityLevel  SecurityLevel,
+    attestationChallenge  OCTET_STRING,
+    uniqueId  OCTET_STRING,
+    softwareEnforced  AuthorizationList,
+    teeEnforced  AuthorizationList,
+}
+
+SecurityLevel ::= ENUMERATED {
+    Software  (0),
+    TrustedEnvironment  (1),
+}
+
+AuthorizationList ::= SEQUENCE {
+    purpose  [1] EXPLICIT SET OF INTEGER OPTIONAL,
+    algorithm  [2] EXPLICIT INTEGER OPTIONAL,
+    keySize  [3] EXPLICIT INTEGER OPTIONAL,
+    digest  [5] EXPLICIT SET OF INTEGER OPTIONAL,
+    padding  [6] EXPLICIT SET OF INTEGER OPTIONAL,
+    ecCurve  [10] EXPLICIT INTEGER OPTIONAL,
+    rsaPublicExponent  [200] EXPLICIT INTEGER OPTIONAL,
+    activeDateTime  [400] EXPLICIT INTEGER OPTIONAL,
+    originationExpireDateTime  [401] EXPLICIT INTEGER OPTIONAL,
+    usageExpireDateTime  [402] EXPLICIT INTEGER OPTIONAL,
+    noAuthRequired  [503] EXPLICIT NULL OPTIONAL,
+    userAuthType  [504] EXPLICIT INTEGER OPTIONAL,
+    authTimeout  [505] EXPLICIT INTEGER OPTIONAL,
+    allowWhileOnBody  [506] EXPLICIT NULL OPTIONAL,
+    allApplications  [600] EXPLICIT NULL OPTIONAL,
+    applicationId  [601] EXPLICIT OCTET_STRING OPTIONAL,
+    creationDateTime  [701] EXPLICIT INTEGER OPTIONAL,
+    origin  [702] EXPLICIT INTEGER OPTIONAL,
+    rollbackResistant  [703] EXPLICIT NULL OPTIONAL,
+    rootOfTrust  [704] EXPLICIT RootOfTrust OPTIONAL,
+    osVersion  [705] EXPLICIT INTEGER OPTIONAL,
+    osPatchLevel  [706] EXPLICIT INTEGER OPTIONAL,
+}
+
+RootOfTrust ::= SEQUENCE {
+    verifiedBootKey  OCTET_STRING,
+    deviceLocked  BOOLEAN,
+    verifiedBootState  VerifiedBootState,
+}
+
+VerifiedBootState ::= ENUMERATED {
+    Verified  (0),
+    SelfSigned  (1),
+    Unverified  (2),
+    Failed  (3),
+}
+```
+
 
 
 
