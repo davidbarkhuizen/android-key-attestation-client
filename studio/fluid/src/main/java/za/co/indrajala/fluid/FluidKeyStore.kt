@@ -118,7 +118,9 @@ class FluidKeyStore {
                     cert
                         .summary()
                         .filter { it.second != null}
-                        .forEach { line -> log.v(line.first, line.second ?: "") }
+                        .forEach {
+                            log.v(it.first.padEnd(40) + it.second)
+                        }
                 }
 
 //            HTTP.post(

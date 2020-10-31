@@ -4,6 +4,7 @@ import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Sequence
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.ubyte.hexToUBytes
 import za.co.indrajala.fluid.ubyte.toHex
 
 class AttestationPackageInfo(
@@ -29,7 +30,7 @@ class AttestationPackageInfo(
         get() = getInteger(Indices.PACKAGE_VERSION)
 
     fun summary() = listOf(
-        Pair("Package Name", packageName),
+        Pair("Package Name", packageName?.hexToUBytes()?.toByteArray()?.decodeToString()),
         Pair("Version", version?.toString())
     )
 }

@@ -1,11 +1,14 @@
 package za.co.indrajala.fluid.attestation
 
 import org.bouncycastle.asn1.*
+import za.co.indrajala.fluid.asn1.getBigInt
 import za.co.indrajala.fluid.asn1.getBoolean
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
 import za.co.indrajala.fluid.attestation.authlist.*
 import za.co.indrajala.fluid.ubyte.toHex
+import java.math.BigInteger
+import java.util.*
 
 class AuthorizationList(
     seq: Array<ASN1Encodable>
@@ -77,6 +80,9 @@ class AuthorizationList(
     private fun getInteger(index: Int): Int? =
         (primitiveForTag[index] as ASN1Integer?)?.getInt()
 
+    private fun getBigInt(index: Int): BigInteger? =
+        primitiveForTag[index]?.getBigInt() ?: null
+
     fun getHex(index: Int): String? =
         primitiveForTag[index]?.getBytes()?.toHex()
 
@@ -125,8 +131,11 @@ class AuthorizationList(
     val noAuthRequired: Boolean?
         get() = getBoolean(TagNumber.NoAuthRequired)
 
-    val creationDateTime: Int?
-        get() = getInteger(TagNumber.CreationDateTime)
+    val creationDateTime: Date?
+        get() {
+            val ms = getBigInt(TagNumber.CreationDateTime)?.toLong() ?: return null
+            return Date(ms)
+        }
 
     val origin: Origin?
         get() {
@@ -188,8 +197,7 @@ class AuthorizationList(
         Pair("Origin", origin?.toString()),
         Pair("OS Version", osVersion?.toString()),
         Pair("OS Patch Level", osPatchLevel?.toString()),
-        Pair("Root Of Trust", rootOfTrust?.toString()),
-        Pair("Attestation Application Id(s):", ""),
+        *(rootOfTrust?.summary() ?: List<Pair<String, String?>>(0){ Pair("","") }).toTypedArray(),
         *(applicationId?.summary() ?: List<Pair<String, String?>>(0){ Pair("","") }).toTypedArray()
     )
 }

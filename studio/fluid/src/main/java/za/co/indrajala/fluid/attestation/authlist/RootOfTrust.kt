@@ -9,12 +9,12 @@ import za.co.indrajala.fluid.ubyte.toHex
 class RootOfTrust(
     private val seq: ASN1Sequence
 ) {
-    class Indices {
+    class SequenceIndex {
         companion object {
-            val VERIFIED_BOOT_KEY = 0
-            val DEVICE_LOCKED = 1
-            val VERIFIED_BOOT_STATE = 2
-            val VERIFIED_BOOT_HASH_INDEX = 3
+            val VerifiedBootKey = 0
+            val DeviceLocked = 1
+            val VerifiedBootState = 2
+            val VerifiedBootHashIndex = 3
         }
     }
 
@@ -37,17 +37,21 @@ class RootOfTrust(
         seq.getObjectAt(index).getBytes().toHex()
 
     val verifiedBootKey: String?
-        get() = getHex(Indices.VERIFIED_BOOT_KEY)
+        get() = getHex(SequenceIndex.VerifiedBootKey)
 
     val deviceLocked: Boolean?
-        get() = getBoolean(Indices.DEVICE_LOCKED)
+        get() = getBoolean(SequenceIndex.DeviceLocked)
 
     val verifiedBootState: VerifiedBootState?
         get() {
-            val int = getEnumerated(Indices.VERIFIED_BOOT_STATE) ?: return null
+            val int = getEnumerated(SequenceIndex.VerifiedBootState) ?: return null
             return VerifiedBootState.fromValue(int)
         }
 
-    override fun toString(): String =
-        "Device Locked $deviceLocked, Verified Boot State $verifiedBootState, Verified Boot Key $verifiedBootKey"
+    fun summary(): List<Pair<String, String?>> = listOf(
+        Pair("Root of Trust", ""),
+        Pair("Device Locked", deviceLocked?.toString()),
+        Pair("Verified Boot Key", verifiedBootKey),
+        Pair("Verified Boot State", verifiedBootState?.toString() ?: null)
+    )
 }

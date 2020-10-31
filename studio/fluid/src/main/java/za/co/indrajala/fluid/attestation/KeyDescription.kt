@@ -36,16 +36,16 @@ class KeyDescription(
 
         private const val ATT_EXT_OID = "1.3.6.1.4.1.11129.2.1.17"
 
-        class Indices {
+        class SequenceIndex {
             companion object {
-                val ATTESTATION_VERSION = 0
-                val ATTESTATION_SECURITY_LEVEL = 1
-                val KEYMASTER_VERSION = 2
-                val KEYMASTER_SECURITY_LEVEL = 3
-                val ATTESTATION_CHALLENGE = 4
-                val UNIQUE_ID = 5
-                val SW_ENFORCED = 6
-                val TEE_ENFORCED = 7
+                val AttestationVersion = 0
+                val AttestationSecurityLevel = 1
+                val KeymasterVersion = 2
+                val KeyMasterSecurityLevel = 3
+                val AttestationChallenge = 4
+                val UniqueID = 5
+                val SW_Enforced = 6
+                val TEE_Enforced = 7
             }
         }
 
@@ -69,14 +69,14 @@ class KeyDescription(
                 decodedSeq.getObjectAt(index) as ASN1Sequence
 
             return KeyDescription(
-                attestationVersion = getInt(Indices.ATTESTATION_VERSION),
-                attestationSecurityLevel = SecurityLevel.fromValue(getInt(Indices.ATTESTATION_SECURITY_LEVEL)),
-                keymasterVersion = getInt(Indices.KEYMASTER_VERSION),
-                keymasterSecurityLevel = SecurityLevel.fromValue(getInt(Indices.KEYMASTER_SECURITY_LEVEL)),
-                attestationChallenge = getHex(Indices.ATTESTATION_CHALLENGE),
-                uniqueId = getHex(Indices.UNIQUE_ID),
-                softwareEnforced = AuthorizationList(getSequence(Indices.SW_ENFORCED).toArray()),
-                teeEnforced = AuthorizationList(getSequence(Indices.TEE_ENFORCED).toArray()),
+                attestationVersion = getInt(SequenceIndex.AttestationVersion),
+                attestationSecurityLevel = SecurityLevel.fromValue(getInt(SequenceIndex.AttestationSecurityLevel)),
+                keymasterVersion = getInt(SequenceIndex.KeymasterVersion),
+                keymasterSecurityLevel = SecurityLevel.fromValue(getInt(SequenceIndex.KeyMasterSecurityLevel)),
+                attestationChallenge = getHex(SequenceIndex.AttestationChallenge),
+                uniqueId = getHex(SequenceIndex.UniqueID),
+                softwareEnforced = AuthorizationList(getSequence(SequenceIndex.SW_Enforced).toArray()),
+                teeEnforced = AuthorizationList(getSequence(SequenceIndex.TEE_Enforced).toArray()),
             )
         }
     }

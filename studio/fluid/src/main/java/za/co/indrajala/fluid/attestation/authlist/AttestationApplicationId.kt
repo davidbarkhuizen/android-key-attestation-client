@@ -9,7 +9,7 @@ class AttestationApplicationId(
 ) {
     private val seq = ASN1InputStream(octetString.octets).readObject() as ASN1Sequence
 
-    class Indices {
+    class SequenceIndex {
         companion object {
             val PackageInfos = 0
             val SignatureDigests = 1
@@ -20,24 +20,26 @@ class AttestationApplicationId(
         seq.getObjectAt(index).getBytes().toHex()
 
     val attPackageInfos: Set<AttestationPackageInfo>?
-        get() = (seq.getObjectAt(Indices.PackageInfos) as ASN1Set?)?.map { AttestationPackageInfo(it.toASN1Primitive() as ASN1Sequence) }?.toSet()
+        get() = (seq.getObjectAt(SequenceIndex.PackageInfos) as ASN1Set?)?.map { AttestationPackageInfo(it.toASN1Primitive() as ASN1Sequence) }?.toSet()
 
     val signatureDigests: Set<String>?
-        get() = (seq.getObjectAt(Indices.SignatureDigests) as ASN1Set?)?.map { it.getBytes().toHex() }?.toSet()
+        get() = (seq.getObjectAt(SequenceIndex.SignatureDigests) as ASN1Set?)?.map { it.getBytes().toHex() }?.toSet()
 
     fun summary(): List<Pair<String, String?>> {
-        val base = listOf(
-            Pair("Signature Digests", signatureDigests?.joinToString(", "))
-        )
+
+        val ret: ArrayList<Pair<String, String?>> = arrayListOf()
+
+        val sigDigests = signatureDigests
+        if (sigDigests != null) {
+            ret.addAll(sigDigests.map { Pair("Signature Digest", it) })
+        }
 
         val packInfos = attPackageInfos
-        return if (packInfos == null)
-             base
-        else
-            listOf(
-                *base.toTypedArray(),
-                Pair<String, String?>("Attestation Package Info(s):", ""),
-                *packInfos.map { it.summary() }.flatten().toTypedArray()
-            )
+        packInfos?.forEach {
+            ret.add(Pair("Attestation Package Info", ""))
+            ret.addAll(it.summary())
+        }
+
+        return ret.toList()
     }
 }
