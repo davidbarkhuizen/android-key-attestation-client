@@ -1,7 +1,6 @@
 package za.co.indrajala.fluid
 
 import za.co.indrajala.fluid.crypto.*
-import za.co.indrajala.fluid.util.log
 
 class Fluid {
 
@@ -21,7 +20,7 @@ class Fluid {
     }
 
     fun test() {
-        FluidKeyStore.attestFluidDeviceRootKey()
+        AndroidKeyStore.attestFluidDeviceRootKey()
     }
 
     fun init(): Fluid {
@@ -36,18 +35,18 @@ class Fluid {
         val deviceFingerprint = fingerprintDevice()
         log.v(deviceFingerprint.toString())
 
-        val keystoreInitialized = FluidKeyStore.initialize()
+        check(AndroidKeyStore.initialize())
 
         val serverChallenge = RNG.bytes(8)
 
-        val generatedDeviceRootKey = FluidKeyStore.generateDeviceRootKey(
+        check(AndroidKeyStore.generateDeviceRootKey(
             serialNumber = 0,
             serverNonce = serverChallenge,
             lifeTimeMinutes = 60*24,
             sizeInBits = 2048
-        )
+        ))
 
-        FluidKeyStore.attestFluidDeviceRootKey()
+        AndroidKeyStore.attestFluidDeviceRootKey()
 
         return this
     }

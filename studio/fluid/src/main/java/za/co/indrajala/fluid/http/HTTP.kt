@@ -3,7 +3,7 @@ package za.co.indrajala.fluid.http
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import za.co.indrajala.fluid.util.log
+import za.co.indrajala.fluid.log
 import java.io.IOException
 
 class HTTP {

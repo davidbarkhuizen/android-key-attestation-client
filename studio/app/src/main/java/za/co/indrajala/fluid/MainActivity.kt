@@ -2,7 +2,6 @@ package za.co.indrajala.fluid
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import za.co.indrajala.fluid.util.log
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onClick(view: android.view.View ) {
+    fun onClick(_view: android.view.View ) {
         try {
             fluid?.test()
         } catch (e: Exception) {

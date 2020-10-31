@@ -4,7 +4,6 @@ import java.security.SecureRandom
 
 class RNG {
     companion object {
-
         private val rng = SecureRandom()
 
         fun bytes(size: Int): ByteArray {

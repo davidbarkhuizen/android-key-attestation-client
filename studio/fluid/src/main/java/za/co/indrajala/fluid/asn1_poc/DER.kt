@@ -1,8 +1,6 @@
 package za.co.indrajala.fluid.asn1_poc
 
-import za.co.indrajala.fluid.ubyte.bitsAreSet
-import za.co.indrajala.fluid.ubyte.getStandAloneBitsValue
-import za.co.indrajala.fluid.ubyte.hexToUBytes
+import za.co.indrajala.fluid.bit.hexToUBytes
 
 class DER {
     companion object {
