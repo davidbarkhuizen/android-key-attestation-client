@@ -1,3 +1,7 @@
-// TODO minimum version check
-// TODO root check
-// TODO instrumentation check
+// TODO security check - minimum version
+// TODO security check - root
+// TODO security check - instrumentation
+
+// TODO proper handling of big int everywhere
+// TODO regularize KeyDescription class
+// TODO refactor ASN1 logic to common core
