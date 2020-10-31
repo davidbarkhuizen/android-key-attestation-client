@@ -55,13 +55,13 @@ class FluidKeyStore {
         ) {
             log.v_header("device root key attestation")
 
-            val cert: Certificate = ks!!.getCertificate(DEVICE_ROOT_KEYSTORE_ALIAS)
+            val targetCert: Certificate = ks!!.getCertificate(DEVICE_ROOT_KEYSTORE_ALIAS)
 
             log.v(".DER: ASN.1")
-            log.v(cert.toDER())
+            log.v(targetCert.toDER())
 
             log.v(".PEM: B64")
-            log.v(cert.toPEM())
+            log.v(targetCert.toPEM())
 
 //            log.v("BC ASN.1 parse:")
 //            log.v(ASN1.describe(cert.encoded))
@@ -78,8 +78,6 @@ class FluidKeyStore {
                 val pem = it.toPEM()
 
                 val x509 = X509.fromPEM(pem)
-
-                val subAltNames = x509.subjectAlternativeNames
                 val subjectName = x509.subjectDN.name
 
                 log.v("$i (len ${der.length / 2}) $subjectName $der")
@@ -87,7 +85,7 @@ class FluidKeyStore {
 
             // ------------------------------
 
-            val indexOfDeviceRootKeyCert =  certChain.indexOfFirst { it.toDER() == cert.toDER() }
+            val indexOfDeviceRootKeyCert =  certChain.indexOfFirst { it.toDER() == targetCert.toDER() }
             log.v("fluid device root key is $indexOfDeviceRootKeyCert in the chain")
             // ------------------------------
 
@@ -109,17 +107,27 @@ class FluidKeyStore {
             log.v("google root key is $indexOfGoogleRootKeyCert in the chain")
 
             certChain
-                .map { X509.fromPEM(cert.toPEM()) }
-                .map { KeyDescription.fromX509Cert(it) }
-                .filterNotNull()
-                .forEachIndexed { index, cert ->
+                .map { X509.fromPEM(it.toPEM()) }
+                .forEachIndexed { index, chainCert ->
                     log.v_header("CERT $index")
 
-                    cert
-                        .summary()
+                    val kd = KeyDescription.fromX509Cert(chainCert)
+
+                    val summary =
+                        if (kd == null)
+                            chainCert.summary()
+                        else
+                            listOf(
+                                Pair("X.509 CERT -------------------------", ""),
+                                *chainCert.summary().toTypedArray(),
+                                Pair("Key Attestation X.509 Extension ----", ""),
+                                *kd.summary().toTypedArray()
+                            )
+
+                    summary
                         .filter { it.second != null}
                         .forEach {
-                            log.v(it.first.padEnd(40) + it.second)
+                            log.v(it.first.padEnd(40) + it.second ?: "")
                         }
                 }
 

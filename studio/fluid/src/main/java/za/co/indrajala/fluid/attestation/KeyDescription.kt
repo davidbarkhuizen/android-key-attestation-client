@@ -31,18 +31,18 @@ class KeyDescription(
 
     val softwareEnforced: AuthorizationList?
         get() {
-            val z = seq.getSequenceAtIndex(Index.SW_Enforced)
-                ?: return null
-
-            return AuthorizationList(z)
+            return AuthorizationList(
+                seq.getSequenceAtIndex(Index.SW_Enforced)
+                    ?: return null
+            )
         }
 
     val teeEnforced: AuthorizationList?
         get() {
-            val z = seq.getSequenceAtIndex(Index.TEE_Enforced)
-                ?: return null
-
-            return AuthorizationList(z)
+            return AuthorizationList(
+                seq.getSequenceAtIndex(Index.TEE_Enforced)
+                    ?: return null
+            )
         }
     fun summary(): List<Pair<String, String?>> = listOf(
         Pair("Attestation Version", attestationVersion?.toString()),
