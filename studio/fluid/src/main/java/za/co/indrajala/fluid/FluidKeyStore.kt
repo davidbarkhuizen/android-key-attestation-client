@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties
 import za.co.indrajala.fluid.asn1.X509
 import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.crypto.*
+import za.co.indrajala.fluid.ubyte.toHex
 import za.co.indrajala.fluid.util.log
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -168,7 +169,9 @@ class FluidKeyStore {
                 .setCertificateNotBefore(validFrom.time)
                 .setCertificateNotAfter(validTo.time)
                 .setKeySize(params.keySizeBits)
-                .setAttestationChallenge(serverNonce)
+
+            keySpecBuilder.setAttestationChallenge(serverNonce)
+            log.v("using server challenge / nonce", serverNonce.toHex())
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 
