@@ -1,9 +1,10 @@
-package za.co.indrajala.fluid.attestation
+package za.co.indrajala.fluid.key_attestation
 
 import org.bouncycastle.asn1.*
-import za.co.indrajala.fluid.asn1.*
-import za.co.indrajala.fluid.attestation.enums.VerifiedBootState
-import za.co.indrajala.fluid.ubyte.toHex
+import za.co.indrajala.fluid.key_attestation.enums.VerifiedBootState
+import za.co.indrajala.fluid.crypto.asn1.getBooleanAtIndex
+import za.co.indrajala.fluid.crypto.asn1.getEnumeratedAtIndex
+import za.co.indrajala.fluid.crypto.asn1.getHexAtIndex
 
 class RootOfTrust(
     private val seq: ASN1Sequence
@@ -34,6 +35,6 @@ class RootOfTrust(
         Pair("Root of Trust", ""),
         Pair("Device Locked", deviceLocked?.toString()),
         Pair("Verified Boot Key", verifiedBootKey),
-        Pair("Verified Boot State", verifiedBootState?.toString() ?: null)
+        Pair("Verified Boot State", verifiedBootState?.toString())
     )
 }

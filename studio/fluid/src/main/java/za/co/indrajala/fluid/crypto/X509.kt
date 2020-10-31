@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.asn1
+package za.co.indrajala.fluid.crypto
 
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory

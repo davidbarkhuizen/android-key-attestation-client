@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.attestation.enums
+package za.co.indrajala.fluid.key_attestation.enums
 
 enum class ECCurve(val value: Int) {
 

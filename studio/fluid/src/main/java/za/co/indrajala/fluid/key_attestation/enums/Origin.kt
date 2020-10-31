@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.attestation.enums
+package za.co.indrajala.fluid.key_attestation.enums
 
 enum class Origin(val value: Int) {
 

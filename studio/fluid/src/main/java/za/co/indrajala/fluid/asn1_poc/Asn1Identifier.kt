@@ -1,6 +1,4 @@
-package za.co.indrajala.fluid.asn1
-
-import za.co.indrajala.fluid.ubyte.getStandAloneBitsValue
+package za.co.indrajala.fluid.asn1_poc
 
 class Asn1Identifier(
     val klass: Asn1Class,

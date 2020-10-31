@@ -19,6 +19,8 @@ fun X509Certificate.summary(): List<Pair<String, String?>> = listOf(
     Pair("Signature", signature.toHex()),
     Pair("Subject Pub Key Algorithm", publicKey.algorithm),
     Pair("Subject Pub Key", publicKey.encoded.toHex()),
-    // Issuer Unique ID
-    // Subject Unique ID
+
+    // TODO keyUsage
+    // TODO Issuer Unique ID
+    // TODO Subject Unique ID
 )

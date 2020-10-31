@@ -1,11 +1,8 @@
-package za.co.indrajala.fluid.attestation
+package za.co.indrajala.fluid.key_attestation
 
 import org.bouncycastle.asn1.*
-import za.co.indrajala.fluid.asn1.*
-import za.co.indrajala.fluid.attestation.enums.*
-import za.co.indrajala.fluid.ubyte.toHex
-import java.lang.Integer.getInteger
-import java.math.BigInteger
+import za.co.indrajala.fluid.key_attestation.enums.*
+import za.co.indrajala.fluid.crypto.asn1.*
 import java.util.*
 
 class AuthorizationList(

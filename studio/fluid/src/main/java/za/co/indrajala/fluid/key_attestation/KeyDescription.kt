@@ -1,11 +1,13 @@
-package za.co.indrajala.fluid.attestation
+package za.co.indrajala.fluid.key_attestation
 
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1OctetString
 import org.bouncycastle.asn1.ASN1Sequence
-import za.co.indrajala.fluid.asn1.*
-import za.co.indrajala.fluid.attestation.enums.SecurityLevel
-import za.co.indrajala.fluid.ubyte.toHex
+import za.co.indrajala.fluid.key_attestation.enums.SecurityLevel
+import za.co.indrajala.fluid.crypto.asn1.getEnumeratedAtIndex
+import za.co.indrajala.fluid.crypto.asn1.getHexAtIndex
+import za.co.indrajala.fluid.crypto.asn1.getIntegerAtIndex
+import za.co.indrajala.fluid.crypto.asn1.getSequenceAtIndex
 import java.security.cert.X509Certificate
 
 class KeyDescription(

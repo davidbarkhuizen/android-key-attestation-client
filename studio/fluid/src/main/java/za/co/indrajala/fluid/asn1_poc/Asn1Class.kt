@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.asn1
+package za.co.indrajala.fluid.asn1_poc
 
 enum class Asn1Class (val value: UByte) {
 

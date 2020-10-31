@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.asn1
+package za.co.indrajala.fluid.crypto.asn1
 
 import org.bouncycastle.asn1.*
 import org.bouncycastle.asn1.util.ASN1Dump

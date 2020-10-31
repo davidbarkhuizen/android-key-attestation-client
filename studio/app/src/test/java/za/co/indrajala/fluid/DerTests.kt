@@ -2,10 +2,7 @@ package za.co.indrajala.fluid
 
 import org.junit.Assert
 import org.junit.Test
-import za.co.indrajala.fluid.asn1.Asn1Class
-import za.co.indrajala.fluid.asn1.DER
-import za.co.indrajala.fluid.asn1.Asn1Identifier
-import za.co.indrajala.fluid.ubyte.hexToUBytes
+import za.co.indrajala.fluid.asn1_poc.DER
 
 class DerTests {
 

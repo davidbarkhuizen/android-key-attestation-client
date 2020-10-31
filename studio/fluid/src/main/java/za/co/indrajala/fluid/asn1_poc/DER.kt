@@ -1,11 +1,10 @@
-package za.co.indrajala.fluid.asn1
+package za.co.indrajala.fluid.asn1_poc
 
 import za.co.indrajala.fluid.ubyte.bitsAreSet
 import za.co.indrajala.fluid.ubyte.getStandAloneBitsValue
 import za.co.indrajala.fluid.ubyte.hexToUBytes
 
 class DER {
-
     companion object {
 
         fun parseOID(bytes: UByteArray) {

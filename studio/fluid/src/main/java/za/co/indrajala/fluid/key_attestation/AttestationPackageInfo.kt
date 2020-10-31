@@ -1,9 +1,9 @@
-package za.co.indrajala.fluid.attestation
+package za.co.indrajala.fluid.key_attestation
 
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Sequence
-import za.co.indrajala.fluid.asn1.getBytes
-import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.crypto.asn1.getBytes
+import za.co.indrajala.fluid.crypto.asn1.getInt
 import za.co.indrajala.fluid.ubyte.hexToUBytes
 import za.co.indrajala.fluid.ubyte.toHex
 

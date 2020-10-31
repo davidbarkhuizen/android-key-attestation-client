@@ -4,8 +4,9 @@ import android.icu.util.Calendar
 import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import za.co.indrajala.fluid.asn1.X509
-import za.co.indrajala.fluid.attestation.KeyDescription
+import za.co.indrajala.fluid.key_attestation.Google
+import za.co.indrajala.fluid.crypto.X509
+import za.co.indrajala.fluid.key_attestation.KeyDescription
 import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.ubyte.toHex
 import za.co.indrajala.fluid.util.log
@@ -90,10 +91,10 @@ class FluidKeyStore {
             log.v("fluid device root key is $indexOfDeviceRootKeyCert in the chain")
             // ------------------------------
 
-            log.v("checking against ${GoogleHardwareAttestation.rootCertsDER.size} currently valid known google root certs...")
+            log.v("checking against ${Google.ROOT_CERTS_DER.size} currently valid known google root certs...")
 
             val googleRoots = certChain
-                .filter { rootCert -> GoogleHardwareAttestation.rootCertsDER.count { it == rootCert.toDER() } > 0 }
+                .filter { rootCert -> Google.ROOT_CERTS_DER.count { it == rootCert.toDER() } > 0 }
 
             log.v("${googleRoots.size} matching google root cert(s):")
             googleRoots.forEach {

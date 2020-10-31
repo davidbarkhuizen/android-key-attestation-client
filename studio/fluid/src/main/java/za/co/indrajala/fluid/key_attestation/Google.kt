@@ -1,13 +1,11 @@
-package za.co.indrajala.fluid.crypto
+package za.co.indrajala.fluid.key_attestation
 
 import android.util.Base64
 import za.co.indrajala.fluid.ubyte.toHex
 
-class GoogleHardwareAttestation {
-
+class Google {
     companion object {
-
-        val rootCertsDER = listOf(
+        val ROOT_CERTS_DER = listOf(
             "-----BEGIN CERTIFICATE-----\n" +
                     "MIIFYDCCA0igAwIBAgIJAOj6GWMU0voYMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV\n" +
                     "BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTYwNTI2MTYyODUyWhcNMjYwNTI0MTYy\n" +
