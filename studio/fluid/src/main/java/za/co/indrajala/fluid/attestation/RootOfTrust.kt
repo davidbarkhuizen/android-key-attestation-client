@@ -1,9 +1,10 @@
-package za.co.indrajala.fluid.attestation.authlist
+package za.co.indrajala.fluid.attestation
 
 import org.bouncycastle.asn1.*
 import za.co.indrajala.fluid.asn1.getBoolean
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.attestation.enums.VerifiedBootState
 import za.co.indrajala.fluid.ubyte.toHex
 
 class RootOfTrust(

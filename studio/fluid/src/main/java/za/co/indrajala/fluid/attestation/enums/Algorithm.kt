@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.attestation.authlist
+package za.co.indrajala.fluid.attestation.enums
 
 enum class Algorithm(val value: Int) {
     RSA(1),

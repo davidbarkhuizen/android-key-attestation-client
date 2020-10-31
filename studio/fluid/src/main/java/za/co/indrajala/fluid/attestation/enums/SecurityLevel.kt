@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.attestation
+package za.co.indrajala.fluid.attestation.enums
 
 enum class SecurityLevel(val value: Int) {
     Software  (0),
@@ -7,8 +7,6 @@ enum class SecurityLevel(val value: Int) {
 
     companion object {
         private val map = SecurityLevel.values().associateBy(SecurityLevel::value)
-        fun fromValue(value: Int): SecurityLevel {
-            return map[value] ?: error("$value")
-        }
+        fun fromValue(value: Int): SecurityLevel? = map[value]
     }
 }

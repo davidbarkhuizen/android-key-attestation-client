@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.attestation.authlist
+package za.co.indrajala.fluid.attestation
 
 import org.bouncycastle.asn1.*
 import za.co.indrajala.fluid.asn1.getBytes

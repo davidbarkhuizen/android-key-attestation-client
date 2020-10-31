@@ -10,8 +10,8 @@ android {
         applicationId "za.co.indrajala.fluid"
         minSdkVersion 28
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode 28
+        versionName '0.1'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -25,6 +25,10 @@ android {
     compileOptions {
         sourceCompatibility kotlin_version
         targetCompatibility kotlin_version
+    }
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
     }
 }
 

@@ -5,7 +5,7 @@ import za.co.indrajala.fluid.asn1.getBigInt
 import za.co.indrajala.fluid.asn1.getBoolean
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
-import za.co.indrajala.fluid.attestation.authlist.*
+import za.co.indrajala.fluid.attestation.enums.*
 import za.co.indrajala.fluid.ubyte.toHex
 import java.math.BigInteger
 import java.util.*
