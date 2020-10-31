@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun onClick(_view: android.view.View ) {
+    fun onClick() {
         try {
             fluid?.test()
         } catch (e: Exception) {

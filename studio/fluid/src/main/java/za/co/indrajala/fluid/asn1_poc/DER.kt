@@ -74,7 +74,7 @@ class DER {
 
             var remainder: List<UByte> = raw.takeLast(raw.size - 1)
 
-            var longTag: Asn1Tag? = null
+            var longTag: Asn1Tag?
 
             // parse long tag if required
             //

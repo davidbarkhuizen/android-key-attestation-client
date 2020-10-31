@@ -74,8 +74,6 @@ class AndroidKeyStore {
 
             val certChain = ks!!.getCertificateChain(DEVICE_ROOT_KEYSTORE_ALIAS)
 
-            val certFactory = CertificateFactory.getInstance("X.509");
-
             log.v("attestation chain for fluid device root key contains ${certChain.size} certificates:");
             certChain.forEachIndexed { i, it ->
                 val der = it.toDER()
@@ -174,7 +172,7 @@ class AndroidKeyStore {
                 .setKeySize(params.keySizeBits)
 
             keySpecBuilder.setAttestationChallenge(serverNonce)
-            log.v("using server challenge / nonce", serverNonce.toHex())
+            log.d("using server challenge / nonce", serverNonce.toHex())
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 

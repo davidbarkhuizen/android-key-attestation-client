@@ -6,7 +6,7 @@ import java.math.BigInteger
 fun ASN1Encodable.getBoolean(): Boolean =
     when (this) {
         is ASN1Boolean -> this.isTrue
-        null -> false
+        is DERNull -> false
         else -> throw IllegalArgumentException("${this.javaClass.name} is not an ASN1Boolean")
     }
 
