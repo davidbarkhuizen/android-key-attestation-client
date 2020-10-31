@@ -4,7 +4,6 @@ import org.bouncycastle.asn1.*
 import za.co.indrajala.fluid.asn1.getBoolean
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
-import za.co.indrajala.fluid.attestation.AttConst
 import za.co.indrajala.fluid.ubyte.toHex
 
 class RootOfTrust(
@@ -15,6 +14,7 @@ class RootOfTrust(
             val VERIFIED_BOOT_KEY = 0
             val DEVICE_LOCKED = 1
             val VERIFIED_BOOT_STATE = 2
+            val VERIFIED_BOOT_HASH_INDEX = 3
         }
     }
 

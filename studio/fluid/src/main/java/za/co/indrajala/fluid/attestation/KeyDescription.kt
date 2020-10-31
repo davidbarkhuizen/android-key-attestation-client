@@ -5,7 +5,6 @@ import org.bouncycastle.asn1.ASN1OctetString
 import org.bouncycastle.asn1.ASN1Sequence
 import za.co.indrajala.fluid.asn1.getBytes
 import za.co.indrajala.fluid.asn1.getInt
-import za.co.indrajala.fluid.attestation.authlist.AuthorizationList
 import za.co.indrajala.fluid.ubyte.toHex
 import java.security.cert.X509Certificate
 
@@ -15,20 +14,21 @@ class KeyDescription(
     val keymasterVersion: Int,
     val keymasterSecurityLevel: SecurityLevel,
     val attestationChallenge: String,
-    val uniqueId: String,
-//    val softwareEnforced: AuthorizationList,
+    val uniqueId: String?,
+    val softwareEnforced: AuthorizationList,
     val teeEnforced: AuthorizationList,
 ) {
-    fun summary(): List<String> = listOf(
-        "Attestation Version: $attestationVersion",
-        "Attestation Security Level: $attestationSecurityLevel",
-        "KeyMaster Version: $keymasterVersion",
-        "KeyMaster Security Level: $keymasterSecurityLevel",
-        "Attestation Challenge: $attestationChallenge",
-        "Unique ID: $uniqueId",
-//        "SOFTWARE ENFORCED",
-//        *softwareEnforced.summary().toTypedArray(),
-        "TEE ENFORCED",
+    fun summary(): List<Pair<String, String?>> = listOf(
+
+        Pair("Attestation Version", attestationVersion?.toString()),
+        Pair("Attestation Security Level", attestationSecurityLevel?.toString()),
+        Pair("KeyMaster Version", keymasterVersion?.toString()),
+        Pair("KeyMaster Security Level", keymasterSecurityLevel?.toString()),
+        Pair("Attestation Challenge", attestationChallenge),
+        Pair("Unique ID", uniqueId),
+        Pair("SOFTWARE ENFORCED", ""),
+        *softwareEnforced.summary().toTypedArray(),
+        Pair("TEE ENFORCED", ""),
         *teeEnforced.summary().toTypedArray(),
     )
 
@@ -75,7 +75,7 @@ class KeyDescription(
                 keymasterSecurityLevel = SecurityLevel.fromValue(getInt(Indices.KEYMASTER_SECURITY_LEVEL)),
                 attestationChallenge = getHex(Indices.ATTESTATION_CHALLENGE),
                 uniqueId = getHex(Indices.UNIQUE_ID),
-//                softwareEnforced = AuthorizationList(getSequence(Indices.SW_ENFORCED).toArray()),
+                softwareEnforced = AuthorizationList(getSequence(Indices.SW_ENFORCED).toArray()),
                 teeEnforced = AuthorizationList(getSequence(Indices.TEE_ENFORCED).toArray()),
             )
         }

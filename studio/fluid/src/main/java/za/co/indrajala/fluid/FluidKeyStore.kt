@@ -4,24 +4,15 @@ import android.icu.util.Calendar
 import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.asn1.ASN1OctetString
-import org.bouncycastle.asn1.ASN1Sequence
 import za.co.indrajala.fluid.asn1.X509
-import za.co.indrajala.fluid.asn1.getBytes
-import za.co.indrajala.fluid.asn1.getInt
-import za.co.indrajala.fluid.attestation.AttConst
 import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.crypto.*
-import za.co.indrajala.fluid.ubyte.toHex
 import za.co.indrajala.fluid.util.log
-import java.io.ByteArrayInputStream
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 
 class FluidKeyStore {
@@ -121,9 +112,13 @@ class FluidKeyStore {
                 .map { X509.fromPEM(cert.toPEM()) }
                 .map { KeyDescription.fromX509Cert(it) }
                 .filterNotNull()
-                .forEachIndexed { index, item ->
+                .forEachIndexed { index, cert ->
                     log.v_header("CERT $index")
-                    item.summary().forEach { line -> log.v(line) }
+
+                    cert
+                        .summary()
+                        .filter { it.second != null}
+                        .forEach { line -> log.v(line.first, line.second ?: "") }
                 }
 
 //            HTTP.post(
