@@ -3,5 +3,4 @@
 // TODO security check - instrumentation
 
 // TODO proper handling of big int everywhere
-// TODO regularize KeyDescription class
 // TODO refactor ASN1 logic to common core

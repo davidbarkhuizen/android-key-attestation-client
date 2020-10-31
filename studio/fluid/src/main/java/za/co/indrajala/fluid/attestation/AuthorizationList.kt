@@ -1,17 +1,15 @@
 package za.co.indrajala.fluid.attestation
 
 import org.bouncycastle.asn1.*
-import za.co.indrajala.fluid.asn1.getBigInt
-import za.co.indrajala.fluid.asn1.getBoolean
-import za.co.indrajala.fluid.asn1.getBytes
-import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.asn1.*
 import za.co.indrajala.fluid.attestation.enums.*
 import za.co.indrajala.fluid.ubyte.toHex
+import java.lang.Integer.getInteger
 import java.math.BigInteger
 import java.util.*
 
 class AuthorizationList(
-    seq: Array<ASN1Encodable>
+    private val seq: ASN1Sequence
 ) {
     class TagNumber {
         companion object {
@@ -67,98 +65,73 @@ class AuthorizationList(
         }
     }
 
-    private val primitiveForTag: Map<Int, ASN1Primitive> = mapOf(
-        *seq.map {
-            val asTaggedOb = it as ASN1TaggedObject
-            Pair<Int, ASN1Primitive>(it.tagNo, it.getObject())
-        }.toTypedArray()
-    )
-
-    private fun getIntegerSet(index: Int): Set<Int>? =
-        (primitiveForTag[index] as ASN1Set?)?.map { it.getInt() }?.toSet()
-
-    private fun getInteger(index: Int): Int? =
-        (primitiveForTag[index] as ASN1Integer?)?.getInt()
-
-    private fun getBigInt(index: Int): BigInteger? =
-        primitiveForTag[index]?.getBigInt() ?: null
-
-    fun getHex(index: Int): String? =
-        primitiveForTag[index]?.getBytes()?.toHex()
-
-    private fun getBoolean(index: Int): Boolean? {
-        val raw =  primitiveForTag[index] ?: return null
-
-        if (raw is DERNull)
-            return null
-
-        return (raw as ASN1Boolean).getBoolean()
-    }
-
     val purpose: Set<Purpose>?
-        get() = getIntegerSet(TagNumber.Purpose)?.map { Purpose.fromValue(it) }?.toSet()
+        get() = seq.getIntSetForTag(TagNumber.Purpose)?.map { Purpose.fromValue(it) }?.toSet()
 
     val algorithm: Algorithm?
         get() {
-            val algoInt = getInteger(TagNumber.Algorithm) ?: return null
+            val algoInt = seq.getIntForTag(TagNumber.Algorithm) ?: return null
             return Algorithm.fromValue(algoInt)
         }
 
     val keySize: Int?
-        get() = getInteger(TagNumber.KeySize)
+        get() = seq.getIntForTag(TagNumber.KeySize)
 
     val digest: Set<Digest>?
-        get() = getIntegerSet(TagNumber.Digest)?.map { Digest.fromValue(it) }?.toSet()
+        get() = seq.getIntSetForTag(TagNumber.Digest)?.map { Digest.fromValue(it) }?.toSet()
 
     val padding: Set<Padding>?
-        get() = getIntegerSet(TagNumber.Padding)?.map { Padding.fromValue(it) }?.toSet()
+        get() = seq.getIntSetForTag(TagNumber.Padding)?.map { Padding.fromValue(it) }?.toSet()
 
     val ecCurve: Set<Padding>?
-        get() = getIntegerSet(TagNumber.ECCurve)?.map { Padding.fromValue(it) }?.toSet()
+        get() = seq.getIntSetForTag(TagNumber.ECCurve)?.map { Padding.fromValue(it) }?.toSet()
 
     val rsaPublicExponent: Int?
-        get() = getInteger(TagNumber.RsaPublicExponent)
+        get() = seq.getIntForTag(TagNumber.RsaPublicExponent)
 
     val activeDateTime: Int?
-        get() = getInteger(TagNumber.ActiveDateTime)
+        get() = seq.getIntForTag(TagNumber.ActiveDateTime)
 
     val originationExpireDateTime: Int?
-        get() = getInteger(TagNumber.OriginationDateTime)
+        get() = seq.getIntForTag(TagNumber.OriginationDateTime)
 
     val usageExpireDateTime: Int?
-        get() = getInteger(TagNumber.UsageExpireDateTime)
+        get() = seq.getIntForTag(TagNumber.UsageExpireDateTime)
 
     val noAuthRequired: Boolean?
-        get() = getBoolean(TagNumber.NoAuthRequired)
+        get() = seq.getBooleanForTag(TagNumber.NoAuthRequired)
 
     val creationDateTime: Date?
         get() {
-            val ms = getBigInt(TagNumber.CreationDateTime)?.toLong() ?: return null
+            val ms = seq.getBigIntegerForTag(TagNumber.CreationDateTime)?.toLong() ?: return null
             return Date(ms)
         }
 
     val origin: Origin?
         get() {
-            val originVal = getInteger(TagNumber.Origin) ?: return null
+            val originVal = seq.getIntForTag(TagNumber.Origin) ?: return null
             return Origin.fromValue(originVal)
         }
 
     val osVersion: Int?
-        get() = getInteger(TagNumber.OSVersion)
+        get() = seq.getIntForTag(TagNumber.OSVersion)
 
     val osPatchLevel: Int?
-        get() = getInteger(TagNumber.OSPatchLevel)
+        get() = seq.getIntForTag(TagNumber.OSPatchLevel)
 
     val rootOfTrust: RootOfTrust?
         get() {
-            val value = primitiveForTag[TagNumber.RootOfTrust] ?: return null
+            val value = seq.getForTag(TagNumber.RootOfTrust)
+                ?: return null
             return RootOfTrust(value as ASN1Sequence)
         }
 
     val applicationId: AttestationApplicationId?
         get() {
-            val value =
-                (primitiveForTag[TagNumber.AttestationApplicationID] ?: return null) as DEROctetString
+            val value = (
+                seq.getForTag(TagNumber.AttestationApplicationID)
+                    ?: return null
+            ) as DEROctetString
 
             return AttestationApplicationId(value)
         }

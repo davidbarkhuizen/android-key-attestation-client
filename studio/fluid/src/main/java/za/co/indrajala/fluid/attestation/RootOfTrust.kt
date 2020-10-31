@@ -1,9 +1,7 @@
 package za.co.indrajala.fluid.attestation
 
 import org.bouncycastle.asn1.*
-import za.co.indrajala.fluid.asn1.getBoolean
-import za.co.indrajala.fluid.asn1.getBytes
-import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.asn1.*
 import za.co.indrajala.fluid.attestation.enums.VerifiedBootState
 import za.co.indrajala.fluid.ubyte.toHex
 
@@ -11,6 +9,7 @@ class RootOfTrust(
     private val seq: ASN1Sequence
 ) {
     class SequenceIndex {
+
         companion object {
             val VerifiedBootKey = 0
             val DeviceLocked = 1
@@ -19,33 +18,15 @@ class RootOfTrust(
         }
     }
 
-    private fun getInteger(index: Int): Int? =
-        (seq.getObjectAt(index) as ASN1Integer).getInt()
-
-    private fun getEnumerated(index: Int): Int? =
-        seq.getObjectAt(index).getInt()
-
-    private fun getBoolean(index: Int): Boolean? {
-        val raw = seq.getObjectAt(index)
-
-        if (raw is DERNull)
-            return null
-
-        return (raw as ASN1Boolean).getBoolean()
-    }
-
-    fun getHex(index: Int): String? =
-        seq.getObjectAt(index).getBytes().toHex()
-
     val verifiedBootKey: String?
-        get() = getHex(SequenceIndex.VerifiedBootKey)
+        get() = seq.getHexAtIndex(SequenceIndex.VerifiedBootKey)
 
     val deviceLocked: Boolean?
-        get() = getBoolean(SequenceIndex.DeviceLocked)
+        get() = seq.getBooleanAtIndex(SequenceIndex.DeviceLocked)
 
     val verifiedBootState: VerifiedBootState?
         get() {
-            val int = getEnumerated(SequenceIndex.VerifiedBootState) ?: return null
+            val int = seq.getEnumeratedAtIndex(SequenceIndex.VerifiedBootState) ?: return null
             return VerifiedBootState.fromValue(int)
         }
 

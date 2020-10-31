@@ -3,8 +3,7 @@ package za.co.indrajala.fluid.attestation
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1OctetString
 import org.bouncycastle.asn1.ASN1Sequence
-import za.co.indrajala.fluid.asn1.getBytes
-import za.co.indrajala.fluid.asn1.getInt
+import za.co.indrajala.fluid.asn1.*
 import za.co.indrajala.fluid.attestation.enums.SecurityLevel
 import za.co.indrajala.fluid.ubyte.toHex
 import java.security.cert.X509Certificate
@@ -12,39 +11,39 @@ import java.security.cert.X509Certificate
 class KeyDescription(
     private val seq: ASN1Sequence
 ) {
-    fun getInt(index: Int): Int =
-        seq.getObjectAt(index).getInt()
-
-    fun getHex(index: Int): String =
-        seq.getObjectAt(index).getBytes().toHex()
-
-    fun getSequence(index: Int): ASN1Sequence =
-        seq.getObjectAt(index) as ASN1Sequence
-
     val attestationVersion: Int?
-        get() = getInt(Index.AttestationVersion)
+        get() = seq.getIntegerAtIndex(Index.AttestationVersion)
 
     val attestationSecurityLevel: SecurityLevel?
-        get() = SecurityLevel.fromValue(getInt(Index.AttestationSecurityLevel))
+        get() = SecurityLevel.fromValue(seq.getEnumeratedAtIndex(Index.AttestationSecurityLevel))
 
     val keymasterVersion: Int?
-        get() = getInt(Index.KeymasterVersion)
+        get() = seq.getIntegerAtIndex(Index.KeymasterVersion)
 
     val keymasterSecurityLevel: SecurityLevel?
-        get() = SecurityLevel.fromValue(getInt(Index.KeyMasterSecurityLevel))
+        get() = SecurityLevel.fromValue(seq.getEnumeratedAtIndex(Index.KeyMasterSecurityLevel))
 
     val attestationChallenge: String?
-        get() = getHex(Index.AttestationChallenge)
+        get() = seq.getHexAtIndex(Index.AttestationChallenge)
 
     val uniqueId: String?
-        get() = getHex(Index.UniqueID)
+        get() = seq.getHexAtIndex(Index.UniqueID)
 
     val softwareEnforced: AuthorizationList?
-        get() =  AuthorizationList(getSequence(Index.SW_Enforced).toArray())
+        get() {
+            val z = seq.getSequenceAtIndex(Index.SW_Enforced)
+                ?: return null
+
+            return AuthorizationList(z)
+        }
 
     val teeEnforced: AuthorizationList?
-        get() =  AuthorizationList(getSequence(Index.TEE_Enforced).toArray())
+        get() {
+            val z = seq.getSequenceAtIndex(Index.TEE_Enforced)
+                ?: return null
 
+            return AuthorizationList(z)
+        }
     fun summary(): List<Pair<String, String?>> = listOf(
         Pair("Attestation Version", attestationVersion?.toString()),
         Pair("Attestation Security Level", attestationSecurityLevel?.toString()),

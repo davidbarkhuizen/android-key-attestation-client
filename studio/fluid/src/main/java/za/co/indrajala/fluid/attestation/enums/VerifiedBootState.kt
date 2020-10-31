@@ -8,9 +8,7 @@ enum class VerifiedBootState(val value: Int) {
     Failed  (3);
 
     companion object {
-        private val map = VerifiedBootState.values().associateBy(VerifiedBootState::value)
-        fun fromValue(value: Int): VerifiedBootState {
-            return map[value] ?: error("$value")
-        }
+        private val map = values().associateBy(VerifiedBootState::value)
+        fun fromValue(value: Int): VerifiedBootState? = map[value]
     }
 }
