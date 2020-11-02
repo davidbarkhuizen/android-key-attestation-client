@@ -5,9 +5,9 @@ import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import za.co.indrajala.fluid.attestation.Google
-import za.co.indrajala.fluid.crypto.java.X509
 import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.bit.toHex
+import za.co.indrajala.fluid.crypto.java.X509
 import za.co.indrajala.fluid.crypto.java.summary
 import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.crypto.java.toPEM
@@ -15,8 +15,11 @@ import za.co.indrajala.fluid.log
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.KeyStoreException
+import java.security.SignatureException
 import java.security.cert.Certificate
-import java.security.cert.CertificateFactory
+import java.security.cert.CertificateExpiredException
+import java.security.cert.CertificateNotYetValidException
+import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 
 class AndroidKeyStore {
@@ -53,6 +56,68 @@ class AndroidKeyStore {
                 log.e("get keystore instance and load from input stream", kse)
                 return false
             }
+        }
+
+        fun validateCertChain(chain: List<X509Certificate>): CertChainValidationError {
+
+            //val kd = KeyDescription.fromX509Cert(chainCert)
+
+            val roots = chain.filter { it.issuerDN.name == it.subjectDN.name }
+            if (roots.isEmpty())
+                return CertChainValidationError.NoRoot
+            if (roots.size > 1)
+                return CertChainValidationError.MoreThanOneRoot
+            val root = roots[0]
+
+            val ordered = arrayListOf<X509Certificate>(root)
+            val remainder = ArrayList(chain.filter { it != root })
+
+            while (ordered.size < chain.size) {
+                val child = remainder.firstOrNull { it.issuerDN == ordered.last().subjectDN }
+                    ?: return CertChainValidationError.BrokenChain
+
+                ordered.add(child)
+                remainder.remove(child)
+            }
+
+            ordered.forEachIndexed { index, child ->
+
+                val details = "$index: Issued By ${child.issuerDN.name}, Subject ${child.subjectDN.name}"
+
+                fun log(text: String) =
+                    log.v("$index $text $details")
+
+                // date
+                try {
+                    child.checkValidity()
+                }
+                catch (expired: CertificateExpiredException) {
+                    log("expired")
+                    return CertChainValidationError.CertificateExpired
+                } catch (notYetValid: CertificateNotYetValidException) {
+                    log("not yet valid")
+                    return CertChainValidationError.CertificateNotYetValid
+                }
+
+                val parent = if (index == 0)
+                    child
+                else
+                    ordered[index - 1]
+
+                try {
+                    child.verify(parent.publicKey)
+                } catch (signature: SignatureException) {
+                    log("bad signature")
+                    return CertChainValidationError.BadSignature
+                } catch (e: Exception) {
+                    log("unable to validate signature")
+                    return CertChainValidationError.UnableToValidateSignature
+                }
+
+                log("valid")
+            }
+
+            return CertChainValidationError.None
         }
 
         fun attestFluidDeviceRootKey(
@@ -132,6 +197,8 @@ class AndroidKeyStore {
                             log.v(it.first.padEnd(40) + it.second)
                         }
                 }
+
+            validateCertChain(certChain.map { X509.fromPEM(it.toPEM()) })
 
 //            HTTP.post(
 //                "http://192.168.8.103:8777/device/register",
