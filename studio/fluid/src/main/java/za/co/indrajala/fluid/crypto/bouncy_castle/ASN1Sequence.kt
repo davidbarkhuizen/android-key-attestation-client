@@ -48,6 +48,10 @@ fun ASN1Sequence.getIntForTag(tagNumber: Int): Int? {
     return ((this.getForTag(tagNumber) ?: return null) as ASN1Integer).getInt()
 }
 
+fun ASN1Sequence.getUIntForTag(tagNumber: Int): UInt? {
+    return ((this.getForTag(tagNumber) ?: return null) as ASN1Integer).getInt().toUInt()
+}
+
 fun ASN1Sequence.getBigIntegerForTag(tagNumber: Int): BigInteger? {
     return (this.getForTag(tagNumber) ?: return null).getBigInt()
 }

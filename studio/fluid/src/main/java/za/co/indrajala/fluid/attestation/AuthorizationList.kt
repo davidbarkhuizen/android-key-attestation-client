@@ -35,7 +35,7 @@ class AuthorizationList(
             val CreationDateTime = 701
             val Origin = 702
 
-            val KM_TAG_ROLLBACK_RESISTANT = 703
+            val RollbackResistant = 703
 
             val RootOfTrust = 704
             val OSVersion = 705
@@ -133,14 +133,25 @@ class AuthorizationList(
             return AttestationApplicationId(value)
         }
 
+    val userAuthType: HardwareAuthenticatorType?
+        get() {
+            val value = seq.getUIntForTag(TagNumber.UserAuthType) ?: return null
+            return HardwareAuthenticatorType.fromValue(value)
+        }
+
+    val authTimeout: Int?
+        get() = seq.getIntForTag(TagNumber.AuthTimeout)
+
+    val rollbackResistance: Boolean?
+        get() = seq.getBooleanForTag(TagNumber.RollbackResistance)
+
+    val rollbackResistant: Boolean?
+        get() = seq.getBooleanForTag(TagNumber.RollbackResistant)
+
     /*
 
-    userAuthType  [504] EXPLICIT INTEGER OPTIONAL,
-    authTimeout  [505] EXPLICIT INTEGER OPTIONAL,
     allowWhileOnBody  [506] EXPLICIT NULL OPTIONAL,
     allApplications  [600] EXPLICIT NULL OPTIONAL,
-
-    rollbackResistant  [703] EXPLICIT NULL OPTIONAL,
 
     attestationIdBrand  [710] EXPLICIT OCTET_STRING OPTIONAL,
     attestationIdDevice  [711] EXPLICIT OCTET_STRING OPTIONAL,
@@ -164,9 +175,14 @@ class AuthorizationList(
         Pair("No Auth Reqd", noAuthRequired?.toString()),
         Pair("Creation Date Time", creationDateTime?.toString()),
         Pair("Usage Expire Date Time", usageExpireDateTime?.toString()),
+        Pair("Origination Expire Date Time", originationExpireDateTime?.toString()),
         Pair("Origin", origin?.toString()),
         Pair("OS Version", osVersion?.toString()),
         Pair("OS Patch Level", osPatchLevel?.toString()),
+        Pair("User Auth Type", userAuthType?.toString()),
+        Pair("Auth Timeout", authTimeout?.toString()),
+        Pair("Rollback Resistant", rollbackResistant?.toString()),
+        Pair("Rollback Resistance", rollbackResistance?.toString()),
         *(rootOfTrust?.summary() ?: List<Pair<String, String?>>(0){ Pair("","") }).toTypedArray(),
         *(applicationId?.summary() ?: List<Pair<String, String?>>(0){ Pair("","") }).toTypedArray()
     )
