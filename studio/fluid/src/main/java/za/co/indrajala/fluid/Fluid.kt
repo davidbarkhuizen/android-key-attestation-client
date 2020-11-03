@@ -1,29 +1,70 @@
 package za.co.indrajala.fluid
 
+import android.content.Context
+import com.google.gson.Gson
+import za.co.indrajala.fluid.bit.hexToUBytes
 import za.co.indrajala.fluid.crypto.*
+import za.co.indrajala.fluid.crypto.java.toDER
+import za.co.indrajala.fluid.http.HTTP
+import za.co.indrajala.fluid.model.device.*
 
 class Fluid {
 
     companion object {
-        private const val ROOT_KEY_ALIAS = "fluid.root"
-        private const val KEY_STORE_NAME = "fluid"
-
-        //private val keystoreSecret: CharArray = "password".toCharArray()
+        private const val RootKeyAlias = "fluid.root"
     }
 
     private var initialized = false
 
-    private fun fingerprintDevice(): DeviceFingerprint {
-        return DeviceFingerprint(
-            android.os.Build.VERSION.SDK_INT
+    // device registration
+
+    private fun indicateIntentToRegisterDevice() {
+        HTTP.post(
+            "/device/register/intent",
+            DeviceRegistrationIntent(),
+            ::handleDevRegIntentRsp
         )
     }
 
-    fun test() {
-        AndroidKeyStore.attestFluidDeviceRootKey()
+    private fun handleDevRegIntentRsp(json: String?) {
+        val permission = Gson()
+            .fromJson(json!!, DeviceRegistrationPermission::class.java)
+
+        // TODO check that we do indeed have permission
+
+        // generate device root key using received params
+
+        check(AndroidKeyStore.generateDeviceRootKey(
+            serialNumber = permission.keySN,
+            serverChallenge = permission.challenge.hexToUBytes().toByteArray(),
+            lifeTimeMinutes = permission.keyLifeTimeMinutes,
+            sizeInBits = permission.keySizeBits
+        ))
+
+        val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
+
+        HTTP.post(
+            "/device/register/complete",
+            DeviceRegistrationRequest(
+                permission.registrationID,
+                chain.map { it.toDER() },
+            ),
+            ::handleDevRegResult
+        )
     }
 
-    fun init(): Fluid {
+    private fun handleDevRegResult(json: String?) {
+        val regResult = Gson()
+            .fromJson(json!!, DeviceRegistrationResult::class.java)
+
+        log.v(if (regResult.succeeded) "device registered" else "device registration failed")
+    }
+
+    fun registerDevice() {
+        indicateIntentToRegisterDevice()
+    }
+
+    fun init(context: Context): Fluid {
         log.v_header("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd", 80, '=')
 
         if (initialized) {
@@ -32,21 +73,10 @@ class Fluid {
         }
 
         log.v_header("device fingerprint")
-        val deviceFingerprint = fingerprintDevice()
+        val deviceFingerprint = DeviceFingerprint.print(context)
         log.v(deviceFingerprint.toString())
 
         check(AndroidKeyStore.initialize())
-
-        val serverChallenge = RNG.bytes(8)
-
-        check(AndroidKeyStore.generateDeviceRootKey(
-            serialNumber = 0,
-            serverNonce = serverChallenge,
-            lifeTimeMinutes = 60*24,
-            sizeInBits = 2048
-        ))
-
-        AndroidKeyStore.attestFluidDeviceRootKey()
 
         return this
     }

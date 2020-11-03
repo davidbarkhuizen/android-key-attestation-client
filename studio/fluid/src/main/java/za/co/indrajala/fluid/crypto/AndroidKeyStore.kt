@@ -120,95 +120,33 @@ class AndroidKeyStore {
             return CertChainValidationError.None
         }
 
-        fun attestFluidDeviceRootKey(
-        ) {
-            log.v_header("device root key attestation")
-
-            val targetCert: Certificate = ks!!.getCertificate(DEVICE_ROOT_KEYSTORE_ALIAS)
-
-            log.v(".DER: ASN.1")
-            log.v(targetCert.toDER())
-
-            log.v(".PEM: B64")
-            log.v(targetCert.toPEM())
-
-//            log.v("BC ASN.1 parse:")
-//            log.v(ASN1.describe(cert.encoded))
-
-            // ------------------------------
+        fun getCertChainForKey(alias: String): List<Certificate> {
+            val targetCert: Certificate = ks!!.getCertificate(alias)
 
             val certChain = ks!!.getCertificateChain(DEVICE_ROOT_KEYSTORE_ALIAS)
-
             log.v("attestation chain for fluid device root key contains ${certChain.size} certificates:");
-            certChain.forEachIndexed { i, it ->
-                val der = it.toDER()
-                val pem = it.toPEM()
-
-                val x509 = X509.fromPEM(pem)
-                val subjectName = x509.subjectDN.name
-
-                log.v("$i (len ${der.length / 2}) $subjectName $der")
-            }
-
-            // ------------------------------
 
             val indexOfDeviceRootKeyCert =  certChain.indexOfFirst { it.toDER() == targetCert.toDER() }
             log.v("fluid device root key is $indexOfDeviceRootKeyCert in the chain")
-            // ------------------------------
 
             log.v("checking against ${Google.ROOT_CERTS_DER.size} currently valid known google root certs...")
-
             val googleRoots = certChain
                 .filter { rootCert -> Google.ROOT_CERTS_DER.count { it == rootCert.toDER() } > 0 }
-
             log.v("${googleRoots.size} matching google root cert(s):")
             googleRoots.forEach {
                 log.v(it.toDER())
             }
-
             check(googleRoots.size == 1, { println("should have one and only one matching root") })
-
             val googleRootCert = googleRoots[0]!!
-
             val indexOfGoogleRootKeyCert =  certChain.indexOfFirst { it.toDER() == googleRootCert.toDER() }
             log.v("google root key is $indexOfGoogleRootKeyCert in the chain")
 
-            certChain
-                .map { X509.fromPEM(it.toPEM()) }
-                .forEachIndexed { index, chainCert ->
-                    log.v_header("CERT $index")
-
-                    val kd = KeyDescription.fromX509Cert(chainCert)
-
-                    val summary =
-                        if (kd == null)
-                            chainCert.summary()
-                        else
-                            listOf(
-                                Pair("X.509 CERT -------------------------", ""),
-                                *chainCert.summary().toTypedArray(),
-                                Pair("Key Attestation X.509 Extension ----", ""),
-                                *kd.summary().toTypedArray()
-                            )
-
-                    summary
-                        .filter { it.second != null}
-                        .forEach {
-                            log.v(it.first.padEnd(40) + it.second)
-                        }
-                }
-
-            validateCertChain(certChain.map { X509.fromPEM(it.toPEM()) })
-
-//            HTTP.post(
-//                "http://192.168.8.103:8777/device/register",
-//                Gson().toJson(PublicKeyCert(cert.toDER(), certChain.map { it.toDER() }))
-//            )
+            return certChain.toList()
         }
 
         fun generateDeviceRootKey(
             serialNumber: Long,
-            serverNonce: ByteArray,
+            serverChallenge: ByteArray,
             lifeTimeMinutes: Int,
             sizeInBits: Int
         ): Boolean {
@@ -238,8 +176,8 @@ class AndroidKeyStore {
                 .setCertificateNotAfter(validTo.time)
                 .setKeySize(params.keySizeBits)
 
-            keySpecBuilder.setAttestationChallenge(serverNonce)
-            log.d("using server challenge / nonce", serverNonce.toHex())
+            keySpecBuilder.setAttestationChallenge(serverChallenge)
+            log.d("using server challenge / nonce", serverChallenge.toHex())
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 

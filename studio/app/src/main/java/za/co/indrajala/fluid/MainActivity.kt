@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             if (fluid == null) {
-                fluid = Fluid().init()
+                fluid = Fluid().init(this.applicationContext)
             }
         } catch (e: Exception) {
             log.v(e.toString())
@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     fun onClick() {
         try {
-            fluid?.test()
+            fluid?.registerDevice()
         } catch (e: Exception) {
             log.v(e.toString())
         }
