@@ -26,6 +26,14 @@ class log {
         fun v(label: String, predicate: Boolean) =
             v("$label: $predicate")
 
+        fun v(label: String, summary: List<Pair<String, String?>>) {
+            v(label.toUpperCase())
+
+            summary
+                .filter { it.second != null}
+                .forEach { log.v(it.first, it.second ?: "" ) }
+        }
+
         fun d(label: String, text: String) =
             d("$label: $text")
 

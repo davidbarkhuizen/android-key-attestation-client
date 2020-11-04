@@ -2,9 +2,13 @@ package za.co.indrajala.fluid
 
 import android.content.Context
 import com.google.gson.Gson
+import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.bit.hexToUBytes
 import za.co.indrajala.fluid.crypto.*
+import za.co.indrajala.fluid.crypto.java.X509
+import za.co.indrajala.fluid.crypto.java.summary
 import za.co.indrajala.fluid.crypto.java.toDER
+import za.co.indrajala.fluid.crypto.java.toPEM
 import za.co.indrajala.fluid.http.HTTP
 import za.co.indrajala.fluid.model.device.*
 
@@ -58,6 +62,21 @@ class Fluid(
         ))
 
         val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
+
+        chain.forEachIndexed { index, it ->
+
+            log.v_header("CERT $index")
+
+            log.v("DER",it.toDER())
+
+            val x509 = X509.fromPEM(it.toPEM())
+
+            log.v("X509", x509.summary())
+
+            val kd = KeyDescription.fromX509Cert(x509)
+            if (kd != null)
+                log.v("Key Description", kd.summary())
+        }
 
         HTTP.post(
             "/device/register/execute",
