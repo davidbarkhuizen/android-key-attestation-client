@@ -21,14 +21,13 @@ import java.security.cert.CertificateExpiredException
 import java.security.cert.CertificateNotYetValidException
 import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
+import kotlin.system.measureTimeMillis
 
 class AndroidKeyStore {
     companion object {
 
         private const val ANDROID_KEYSTORE_TYPE = "AndroidKeyStore"
         private const val ANDROID_KEYSTORE_NAME = "AndroidKeyStore"
-
-        const val DEVICE_ROOT_KEYSTORE_ALIAS = "fluid.device.key"
 
         private var ks: KeyStore? = null
 
@@ -123,7 +122,7 @@ class AndroidKeyStore {
         fun getCertChainForKey(alias: String): List<Certificate> {
             val targetCert: Certificate = ks!!.getCertificate(alias)
 
-            val certChain = ks!!.getCertificateChain(DEVICE_ROOT_KEYSTORE_ALIAS)
+            val certChain = ks!!.getCertificateChain(alias)
             log.v("attestation chain for fluid device root key contains ${certChain.size} certificates:");
 
             val indexOfDeviceRootKeyCert =  certChain.indexOfFirst { it.toDER() == targetCert.toDER() }
@@ -145,19 +144,20 @@ class AndroidKeyStore {
         }
 
         fun generateDeviceRootKey(
+            alias: String,
             serialNumber: Long,
             serverChallenge: ByteArray,
             lifeTimeMinutes: Int,
             sizeInBits: Int
         ): Boolean {
-            log.v_header("DEVICE ROOT KEY")
+            log.v_header("generate and attest device root key")
 
             val validFrom = GregorianCalendar()
             val validTo = validFrom.clone() as GregorianCalendar
             validTo.add(Calendar.MINUTE, lifeTimeMinutes)
 
             val params = AsymKeyParams(
-                subjectCommonName = DEVICE_ROOT_KEYSTORE_ALIAS,
+                subjectCommonName = alias,
                 certSN = serialNumber,
                 keySizeBits = sizeInBits,
                 purpose = KeyPurpose.Integrity,
@@ -168,7 +168,7 @@ class AndroidKeyStore {
             )
 
             val keySpecBuilder = KeyGenParameterSpec
-                .Builder(DEVICE_ROOT_KEYSTORE_ALIAS, params.purpose.purpose)
+                .Builder(alias, params.purpose.purpose)
                 .setCertificateSubject(X500Principal("CN=${params.subjectCommonName}"))
                 .setCertificateSerialNumber(params.certSN)
                 .setDigests(params.digest)
@@ -177,7 +177,7 @@ class AndroidKeyStore {
                 .setKeySize(params.keySizeBits)
 
             keySpecBuilder.setAttestationChallenge(serverChallenge)
-            log.d("using server challenge / nonce", serverChallenge.toHex())
+            log.d("using server challenge", serverChallenge.toHex())
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 
@@ -198,9 +198,10 @@ class AndroidKeyStore {
             )
 
             keyGenerator.initialize(keyGenParamSpec)
-            keyGenerator.generateKeyPair()
 
-            log.v("generated S/N $serialNumber, $sizeInBits bits, valid for $lifeTimeMinutes minutes")
+            val keyGenTime = measureTimeMillis { keyGenerator.generateKeyPair() }
+
+            log.v("generated $sizeInBits bit asymmetric RSA key in $keyGenTime ms")
 
             return true
         }

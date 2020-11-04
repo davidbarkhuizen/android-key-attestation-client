@@ -8,33 +8,49 @@ import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.http.HTTP
 import za.co.indrajala.fluid.model.device.*
 
-class Fluid {
-
+class Fluid(
+    host: String,
+    port: Int,
+) {
     companion object {
         private const val RootKeyAlias = "fluid.root"
     }
 
-    private var initialized = false
+    init {
+        log.v_header("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd", 80, '=')
+        check(AndroidKeyStore.initialize())
+
+        HTTP.configure("http", host, port, HTTP.Companion.LogLevel.Verbose)
+    }
 
     // device registration
 
-    private fun indicateIntentToRegisterDevice() {
+    private fun indicateIntentToRegisterDevice(
+        fingerprint: DeviceFingerprint
+    ) {
         HTTP.post(
             "/device/register/intent",
-            DevRegInitRq(),
+            DevRegInitRq(fingerprint),
             ::handleDevRegIntentRsp
         )
     }
 
     private fun handleDevRegIntentRsp(json: String?) {
+
+        if (json == null) {
+            log.v("null response body received from server")
+            return
+        }
+
         val permission = Gson()
-            .fromJson(json!!, DevRegInitRsp::class.java)
+            .fromJson(json, DevRegInitRsp::class.java)
 
         // TODO check that we do indeed have permission
 
         // generate device root key using received params
 
         check(AndroidKeyStore.generateDeviceRootKey(
+            RootKeyAlias,
             serialNumber = permission.keySN,
             serverChallenge = permission.keyAttestationChallenge.hexToUBytes().toByteArray(),
             lifeTimeMinutes = permission.keyLifeTimeMinutes,
@@ -58,31 +74,24 @@ class Fluid {
             .fromJson(json!!, DevRegCompletionRsp::class.java)
 
         log.v(
-            if (regResult.succeeded)
+            if (regResult.registered)
                 "device registered"
             else
-                "device registration failed"
+                "device not registered!"
         )
     }
 
-    fun registerDevice() {
-        indicateIntentToRegisterDevice()
-    }
+    fun registerDevice(context: Context) {
 
-    fun init(context: Context): Fluid {
-        log.v_header("Fluid Integrity & Confidentiality - (C) 2020, Indrajala (Pty) Ltd", 80, '=')
+        try {
 
-        if (initialized) {
-            log.v("the Fluid module has already initialized!")
-            return this
+            log.v_header("device fingerprint")
+            val deviceFingerprint = DeviceFingerprint.print(context)
+            log.v(deviceFingerprint.toString())
+
+            indicateIntentToRegisterDevice(deviceFingerprint)
+        } catch (e: Exception) {
+            val ee = e;
         }
-
-        log.v_header("device fingerprint")
-        val deviceFingerprint = DeviceFingerprint.print(context)
-        log.v(deviceFingerprint.toString())
-
-        check(AndroidKeyStore.initialize())
-
-        return this
     }
 }

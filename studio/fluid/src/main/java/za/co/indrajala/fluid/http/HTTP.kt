@@ -10,7 +10,13 @@ import java.io.IOException
 class HTTP {
     companion object {
 
-        private val JSON = "application/json; charset=utf-8".toMediaTypeOrNull()!!
+        enum class LogLevel {
+            Off,
+            On,
+            Verbose
+        }
+
+        private val ContentTypeJSON = "application/json; charset=utf-8".toMediaTypeOrNull()!!
 
         private val client = OkHttpClient()
 
@@ -18,41 +24,77 @@ class HTTP {
 
         private var protocol = "!not configured!"
         private var host = "!not configured!"
+        private var port = 0
+
+        private var logLevel = LogLevel.Off
 
         fun configure(
             protocol: String,
-            host: String
+            host: String,
+            port: Int,
+            logLevel: LogLevel = LogLevel.Off
         ) {
             this.protocol = protocol
             this.host = host
+            this.port = port
+
+            this.logLevel = logLevel
         }
 
         val urlBase: String
-            get() = "$protocol://$host"
+            get() = "$protocol://$host:$port"
 
         fun post(path: String, payload: Any, callback: (json: String?) -> Unit) {
 
-            val json = Gson().toJson(payload)
+            val jsonRequest = Gson().toJson(payload)
+            val url = "$urlBase$path"
 
             val callBacks = object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     e.printStackTrace()
-                    log.e("HTTP", e)
+
+                    when (logLevel) {
+                        LogLevel.On, LogLevel.Verbose -> log.e("POST RQ", e)
+                        else -> Unit
+                    }
+
                     callback(null)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     response.use {
-                        log.v("POST rsp: ${response.body!!.string()}")
-                        callback(response.body.toString())
+
+                        // TODO check content-type = application/json
+
+                        val jsonResponse = response.body?.string()
+
+                        when (logLevel) {
+                            LogLevel.On, LogLevel.Verbose -> log.v("POST RSP: $url")
+                            else -> Unit
+                        }
+                        when (logLevel) {
+                            LogLevel.Verbose -> log.v("RSP payload: $jsonResponse")
+                            else -> Unit
+                        }
+
+                        callback(jsonResponse)
                     }
                 }
             }
 
+            when (logLevel) {
+                LogLevel.On, LogLevel.Verbose -> log.v("POST: $url")
+                else -> Unit
+            }
+            when (logLevel) {
+                LogLevel.Verbose -> log.v("RQ payload: $jsonRequest")
+                else -> Unit
+            }
+
             val call: Call = client.newCall(
                 Request.Builder()
-                    .url("$urlBase$path")
-                    .post(json.toRequestBody(JSON))
+                    .url(url)
+                    .post(jsonRequest.toRequestBody(ContentTypeJSON))
                     .build()
             )
             call.enqueue(callBacks)
