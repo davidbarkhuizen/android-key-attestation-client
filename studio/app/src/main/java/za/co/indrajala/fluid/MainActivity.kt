@@ -5,26 +5,18 @@ import android.os.Bundle
 
 class MainActivity : AppCompatActivity() {
 
-    var fluid: Fluid? = null
+    var fluid = Fluid().init(this.applicationContext)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        try {
-            if (fluid == null) {
-                fluid = Fluid().init(this.applicationContext)
-            }
-        } catch (e: Exception) {
-            log.v(e.toString())
-        }
     }
 
     fun onClick() {
         try {
-            fluid?.registerDevice()
+            fluid.registerDevice()
         } catch (e: Exception) {
-            log.v(e.toString())
+            log.e("device registration", e)
         }
     }
 }

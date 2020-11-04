@@ -21,14 +21,14 @@ class Fluid {
     private fun indicateIntentToRegisterDevice() {
         HTTP.post(
             "/device/register/intent",
-            DeviceRegistrationIntent(),
+            DevRegInitRq(),
             ::handleDevRegIntentRsp
         )
     }
 
     private fun handleDevRegIntentRsp(json: String?) {
         val permission = Gson()
-            .fromJson(json!!, DeviceRegistrationPermission::class.java)
+            .fromJson(json!!, DevRegInitRsp::class.java)
 
         // TODO check that we do indeed have permission
 
@@ -36,7 +36,7 @@ class Fluid {
 
         check(AndroidKeyStore.generateDeviceRootKey(
             serialNumber = permission.keySN,
-            serverChallenge = permission.challenge.hexToUBytes().toByteArray(),
+            serverChallenge = permission.keyAttestationChallenge.hexToUBytes().toByteArray(),
             lifeTimeMinutes = permission.keyLifeTimeMinutes,
             sizeInBits = permission.keySizeBits
         ))
@@ -44,8 +44,8 @@ class Fluid {
         val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
 
         HTTP.post(
-            "/device/register/complete",
-            DeviceRegistrationRequest(
+            "/device/register/execute",
+            DevRegCompletionRq(
                 permission.registrationID,
                 chain.map { it.toDER() },
             ),
@@ -55,9 +55,14 @@ class Fluid {
 
     private fun handleDevRegResult(json: String?) {
         val regResult = Gson()
-            .fromJson(json!!, DeviceRegistrationResult::class.java)
+            .fromJson(json!!, DevRegCompletionRsp::class.java)
 
-        log.v(if (regResult.succeeded) "device registered" else "device registration failed")
+        log.v(
+            if (regResult.succeeded)
+                "device registered"
+            else
+                "device registration failed"
+        )
     }
 
     fun registerDevice() {
