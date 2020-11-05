@@ -3,6 +3,7 @@ package za.co.indrajala.fluid
 class log {
     companion object {
         private const val ANDROID_LOG_TAG = "fluid.log"
+        private const val lineLen = 80
 
         fun v(s: String) =
             s.split("\n")
@@ -12,9 +13,12 @@ class log {
             s.split("\n")
                 .forEach { android.util.Log.d(ANDROID_LOG_TAG, it) }
 
-        fun v_header(s: String, dividerLen: Int = 80, dividerChar: Char = '-') {
+        fun v_rjust(text: String) =
+            v("${text}".padStart(lineLen, ' '))
+
+        fun v_header(s: String, dividerLen: Int = lineLen, dividerChar: Char = '-') {
             v("".padStart(dividerLen, dividerChar))
-            v("${s.toUpperCase()}".padStart(dividerLen, ' '))
+            v_rjust(s.toUpperCase())
         }
 
         fun v(label: String, text: String) =
@@ -27,7 +31,7 @@ class log {
             v("$label: $predicate")
 
         fun v(label: String, summary: List<Pair<String, String?>>) {
-            v(label.toUpperCase())
+            v_rjust(label)
 
             summary
                 .filter { it.second != null}

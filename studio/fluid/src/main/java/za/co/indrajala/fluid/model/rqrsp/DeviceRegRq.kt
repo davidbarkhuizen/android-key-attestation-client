@@ -1,6 +1,6 @@
-package za.co.indrajala.fluid.model.device
+package za.co.indrajala.fluid.model.rqrsp
 
-class DevRegCompletionRq(
+class DeviceRegRq(
     val registrationID: String,
     val hwAttestationKeyChain: List<String>,
 )

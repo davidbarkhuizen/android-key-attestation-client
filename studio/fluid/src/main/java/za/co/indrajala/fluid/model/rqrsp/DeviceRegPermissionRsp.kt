@@ -1,6 +1,6 @@
-package za.co.indrajala.fluid.model.device
+package za.co.indrajala.fluid.model.rqrsp
 
-data class DevRegInitRsp(
+data class DeviceRegPermissionRsp(
     val keyAttestationChallenge: String,
     val registrationID: String,
     val keyLifeTimeMinutes: Int,

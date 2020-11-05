@@ -11,6 +11,10 @@ import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.crypto.java.toPEM
 import za.co.indrajala.fluid.http.HTTP
 import za.co.indrajala.fluid.model.device.*
+import za.co.indrajala.fluid.model.rqrsp.DeviceRegPermissionRq
+import za.co.indrajala.fluid.model.rqrsp.DeviceRegPermissionRsp
+import za.co.indrajala.fluid.model.rqrsp.DeviceRegRq
+import za.co.indrajala.fluid.model.rqrsp.DeviceRegRsp
 
 class Fluid(
     host: String,
@@ -29,17 +33,17 @@ class Fluid(
 
     // device registration
 
-    private fun indicateIntentToRegisterDevice(
+    private fun requestPermissionToRegisterDevice(
         fingerprint: DeviceFingerprint
     ) {
         HTTP.post(
-            "/device/register/intent",
-            DevRegInitRq(fingerprint),
-            ::handleDevRegIntentRsp
+            "/device-registration/permission",
+            DeviceRegPermissionRq(fingerprint),
+            ::handlePermissionToRegisterDevice
         )
     }
 
-    private fun handleDevRegIntentRsp(json: String?) {
+    private fun handlePermissionToRegisterDevice(json: String?) {
 
         if (json == null) {
             log.v("null response body received from server")
@@ -47,7 +51,7 @@ class Fluid(
         }
 
         val permission = Gson()
-            .fromJson(json, DevRegInitRsp::class.java)
+            .fromJson(json, DeviceRegPermissionRsp::class.java)
 
         // TODO check that we do indeed have permission
 
@@ -67,8 +71,6 @@ class Fluid(
 
             log.v_header("CERT $index")
 
-            log.v("DER",it.toDER())
-
             val x509 = X509.fromPEM(it.toPEM())
 
             log.v("X509", x509.summary())
@@ -76,21 +78,24 @@ class Fluid(
             val kd = KeyDescription.fromX509Cert(x509)
             if (kd != null)
                 log.v("Key Description", kd.summary())
+
+            log.v_rjust("DER")
+            log.v(it.toDER())
         }
 
         HTTP.post(
-            "/device/register/execute",
-            DevRegCompletionRq(
+            "/device-registration/register",
+            DeviceRegRq(
                 permission.registrationID,
                 chain.map { it.toDER() },
             ),
-            ::handleDevRegResult
+            ::handleDeviceRegistrationResponse
         )
     }
 
-    private fun handleDevRegResult(json: String?) {
+    private fun handleDeviceRegistrationResponse(json: String?) {
         val regResult = Gson()
-            .fromJson(json!!, DevRegCompletionRsp::class.java)
+            .fromJson(json!!, DeviceRegRsp::class.java)
 
         log.v(
             if (regResult.registered)
@@ -100,7 +105,7 @@ class Fluid(
         )
     }
 
-    fun registerDevice(context: Context) {
+    fun initiateDeviceRegistration(context: Context) {
 
         try {
 
@@ -108,7 +113,7 @@ class Fluid(
             val deviceFingerprint = DeviceFingerprint.print(context)
             log.v(deviceFingerprint.toString())
 
-            indicateIntentToRegisterDevice(deviceFingerprint)
+            requestPermissionToRegisterDevice(deviceFingerprint)
         } catch (e: Exception) {
             val ee = e;
         }
