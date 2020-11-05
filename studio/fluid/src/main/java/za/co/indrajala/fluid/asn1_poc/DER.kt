@@ -1,6 +1,7 @@
 package za.co.indrajala.fluid.asn1_poc
 
 import za.co.indrajala.fluid.bit.hexToUBytes
+import za.co.indrajala.fluid.log
 
 class DER {
     companion object {
@@ -8,7 +9,7 @@ class DER {
         fun parseOID(bytes: UByteArray) {
 
             val firstByte = bytes[0]
-            println(firstByte.toString(16))
+            log.v(firstByte.toString(16))
 
             val firstNodeValue = firstByte / 40.toUByte()
             val secondNodeValue = firstByte - (firstNodeValue * 40.toUInt())
@@ -48,64 +49,74 @@ class DER {
                 }
             }
 
-            println("OID: ${nodes.joinToString(".")}")
+            log.v("OID: ${nodes.joinToString(".")}")
         }
 
         fun parse(hex: String) {
 
-            println("raw: $hex")
+            log.v("raw: $hex")
 
             val raw = hex.hexToUBytes()
 
             val b = raw[0]
 
-            println("b1 $b ${b.toString(radix = 2)}")
+            log.v("b1 $b ${b.toString(radix = 2)}")
 
             val idClass = Asn1Class.fromValue(b.getStandAloneBitsValue(8,7))
-            println("class $idClass")
+            log.v("class $idClass")
 
             val construction = Asn1Construction.fromValue(b.getStandAloneBitsValue(6))
-            println("construction $construction")
+            log.v("construction $construction")
 
             // TODO validate that construction is permitted for tag
 
             val initialOctetTag = Asn1Tag.fromValue(b.getStandAloneBitsValue(1,2,3,4,5).toULong())
-            println("initialTagOctet $initialOctetTag")
+            log.v("initialTagOctet $initialOctetTag")
 
-            var remainder: List<UByte> = raw.takeLast(raw.size - 1)
+            val remainder: ArrayList<UByte> = ArrayList(raw.takeLast(raw.size - 1))
 
-            var longTag: Asn1Tag?
+            val longTag: Asn1Tag?
 
             // parse long tag if required
             //
             if (initialOctetTag.value == 31.toULong()) {
                 // ==> tag coded over one or more subsequent bytes
 
-                var subsequentIdentifierTagBytes: ArrayList<UByte> = arrayListOf()
+                // currently
+                //
+                //          00001010111101
 
-                var more = true
-                while (more) {
+                // reference
+                // decimal      701
+                // binary       1010111101
+                //
+
+                val subsequentIdentifierTagBytes: ArrayList<UByte> = arrayListOf()
+
+                while (remainder[0].bitsAreSet(8)) {
                     subsequentIdentifierTagBytes.add(remainder[0])
-                    remainder = remainder.takeLast(remainder.size - 1)
-                    more = remainder.isNotEmpty() && remainder[0].bitsAreSet(8)
+                    remainder.removeAt(0)
                 }
 
-                println("subsequentIdentifierTagBytes:")
+                subsequentIdentifierTagBytes.add(remainder[0])
+                remainder.removeAt(0)
+
+                log.v("subsequentIdentifierTagBytes (${subsequentIdentifierTagBytes.size}):")
                 subsequentIdentifierTagBytes.forEach {
-                    println(it)
+                    log.v(it.toString(16))
                 }
 
-                var subsequentTag7BitStrings = subsequentIdentifierTagBytes
+                val subsequentTag7BitStrings = subsequentIdentifierTagBytes
                     .map { it.toString(radix = 2).padStart(8, '0').takeLast(7) }
 
-                println("subsequentTag7BitStrings:")
+                log.v("subsequentTag7BitStrings:")
                 subsequentTag7BitStrings.forEach {
-                    println(it)
+                    log.v(it)
                 }
 
-                val tagBits = subsequentTag7BitStrings.asReversed().joinToString("")
+                val tagBits = subsequentTag7BitStrings.joinToString("")
 
-                println("tagBits, $tagBits")
+                log.v("tagBits, $tagBits")
 
                 val tagBitsPackedToNearestByte =
                     if (tagBits.length % 8 == 0)
@@ -113,34 +124,36 @@ class DER {
                     else
                         "0".repeat(8 - (tagBits.length % 8)) + tagBits
 
-                println("tagBitsPackedToNearestByte, $tagBitsPackedToNearestByte")
+                log.v("tagBitsPackedToNearestByte, $tagBitsPackedToNearestByte")
 
                 val tagNumber = tagBitsPackedToNearestByte.toULong(radix = 2)
-                println("tagNumber $tagNumber")
+                log.v("tagNumber $tagNumber")
 
                 longTag = Asn1Tag.fromValue(tagNumber)
-                println(longTag)
+                log.v(longTag.toString())
             }
 
             // parse length bytes
 
             val firstLengthByte = remainder[0]
-            remainder = remainder.takeLast(remainder.size - 1)
+            remainder.removeAt(0)
 
             val longFormLength = firstLengthByte.bitsAreSet(8)
 
-            println(if (longFormLength) "long form length" else "short form length")
+            log.v(if (longFormLength) "long form length" else "short form length")
 
             val length: ULong = if (!longFormLength) {
                 firstLengthByte.getStandAloneBitsValue(1,2,3,4,5,6,7).toULong()
             } else {
                 val numberOfSubsequentLengthBytes = firstLengthByte.getStandAloneBitsValue(1,2,3,4,5,6,7).toInt()
 
-                println("$numberOfSubsequentLengthBytes subsequent length bytes")
+                log.v("$numberOfSubsequentLengthBytes subsequent length bytes")
 
                 val lengthBytes = remainder.take(numberOfSubsequentLengthBytes)
 
-                remainder = remainder.takeLast(remainder.size - numberOfSubsequentLengthBytes)
+                for (i in 1..numberOfSubsequentLengthBytes) {
+                    remainder.removeAt(0)
+                }
 
                 lengthBytes
                     .map { it.toString(16).padStart(2, '0') }
@@ -148,26 +161,27 @@ class DER {
                     .toULong(16)
             }
 
-            println("length $length")
+            log.v("length $length")
 
             val content = remainder.take(length.toInt())
             val contentHex = content.joinToString(separator = "", transform = { it.toString(16).padStart(2, '0') })
 
-            remainder = remainder.takeLast(remainder.size - length.toInt())
+            for (i in 1..length.toInt())
+                remainder.removeAt(0)
 
             if (construction == Asn1Construction.Constructed) {
-                println("parsing next layer of constructed element")
-                println("-".repeat(60))
+                log.v("parsing next layer of constructed element")
+                log.v("-".repeat(60))
                 parse(contentHex)
             } else {
-                println("content: $contentHex")
+                log.v("content: $contentHex")
 
                 if (initialOctetTag == Asn1Tag.object_identifier) {
                     parseOID(contentHex.hexToUBytes())
                 }
             }
 
-            println("=".repeat(60))
+            log.v("=".repeat(60))
             if (remainder.isNotEmpty()) {
                 parse(remainder.joinToString(separator = "", transform = { it.toString(16).padStart(2, '0') }))
             }
