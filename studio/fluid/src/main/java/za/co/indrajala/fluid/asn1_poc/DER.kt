@@ -6,7 +6,7 @@ import za.co.indrajala.fluid.log
 class DER {
     companion object {
 
-        private const val logging = false
+        private const val logging = true
 
         fun parseOID(bytes: UByteArray) {
 
@@ -56,12 +56,10 @@ class DER {
 
         fun parse(hex: String) {
 
+            val raw = hex.hexToUBytes()
             if (logging) log.v("raw: $hex")
 
-            val raw = hex.hexToUBytes()
-
             val b = raw[0]
-
             if (logging) log.v("b1 $b ${b.toString(radix = 2)}")
 
             val idClass = Asn1Class.fromValue(b.getStandAloneBitsValue(8,7))
@@ -77,7 +75,6 @@ class DER {
             val initialOctetTag = Asn1Tag.fromValue(initialOctetTagNumber)
                     ?: throw IllegalArgumentException(
                             "unexpected initial identifier tag value: $initialOctetTagNumber (source = ${b.toString(16)}")
-
             if (logging) log.v("initialTagOctet: tag number $initialOctetTagNumber, tag $initialOctetTag")
 
             val remainder: ArrayList<UByte> = ArrayList(raw.takeLast(raw.size - 1))
@@ -179,6 +176,16 @@ class DER {
 
             for (i in 1..length.toInt())
                 remainder.removeAt(0)
+
+//            if (tag == Asn1Tag.octet_string) {
+//                try {
+//                    if (logging) log.v("attempting to parse octet_string")
+//                    if (logging) log.v("-".repeat(60))
+//                    parse(contentHex)
+//                } catch (e: Exception) {
+//                    if (logging) log.e("failed to parse octet_string", e)
+//                }
+//            }
 
             if (construction == Asn1Construction.Constructed) {
                 if (logging) log.v("parsing next layer of constructed element")
