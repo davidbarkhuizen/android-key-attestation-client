@@ -10,12 +10,6 @@ import java.io.IOException
 class HTTP {
     companion object {
 
-        enum class LogLevel {
-            Off,
-            On,
-            Verbose
-        }
-
         private val ContentTypeJSON = "application/json; charset=utf-8".toMediaTypeOrNull()!!
 
         private val client = OkHttpClient()
@@ -26,19 +20,16 @@ class HTTP {
         private var host = "!not configured!"
         private var port = 0
 
-        private var logLevel = LogLevel.Off
+        private val logging = true
 
         fun configure(
             protocol: String,
             host: String,
-            port: Int,
-            logLevel: LogLevel = LogLevel.Off
+            port: Int
         ) {
             this.protocol = protocol
             this.host = host
             this.port = port
-
-            this.logLevel = logLevel
         }
 
         val urlBase: String
@@ -53,10 +44,10 @@ class HTTP {
                 override fun onFailure(call: Call, e: IOException) {
                     e.printStackTrace()
 
-                    when (logLevel) {
-                        LogLevel.On, LogLevel.Verbose -> log.e("POST RQ", e)
-                        else -> Unit
+                    if (logging) {
+                        log.e("POST RQ", e)
                     }
+
 
                     callback(null)
                 }
@@ -68,13 +59,8 @@ class HTTP {
 
                         val jsonResponse = response.body?.string()
 
-                        when (logLevel) {
-                            LogLevel.On, LogLevel.Verbose -> log.v("POST RSP: $url")
-                            else -> Unit
-                        }
-                        when (logLevel) {
-                            LogLevel.Verbose -> log.v("RSP payload: $jsonResponse")
-                            else -> Unit
+                        if (logging) {
+                            log.v("rsp to POST from $url: $jsonResponse")
                         }
 
                         callback(jsonResponse)
@@ -82,13 +68,8 @@ class HTTP {
                 }
             }
 
-            when (logLevel) {
-                LogLevel.On, LogLevel.Verbose -> log.v("POST: $url")
-                else -> Unit
-            }
-            when (logLevel) {
-                LogLevel.Verbose -> log.v("RQ payload: $jsonRequest")
-                else -> Unit
+            if (logging) {
+                log.v("POST to $url: $jsonRequest")
             }
 
             val call: Call = client.newCall(

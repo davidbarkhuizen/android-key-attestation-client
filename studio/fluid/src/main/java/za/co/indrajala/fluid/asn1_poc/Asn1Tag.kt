@@ -41,9 +41,9 @@ enum class Asn1Tag (val value: ULong) {
     relative_oid_iri(36.toULong());
 
     companion object {
-        private val map = Asn1Tag.values().associateBy(Asn1Tag::value)
-        fun fromValue(value: ULong): Asn1Tag {
-            return map[value] ?: error("$value")
-        }
+        private val map = values().associateBy(Asn1Tag::value)
+
+        fun fromValue(value: ULong): Asn1Tag? =
+                map[value]
     }
 }
