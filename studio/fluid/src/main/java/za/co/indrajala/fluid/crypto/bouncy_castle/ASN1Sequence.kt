@@ -1,8 +1,10 @@
 package za.co.indrajala.fluid.crypto.bouncy_castle
 
 import org.bouncycastle.asn1.*
+import za.co.indrajala.fluid.attestation.AuthorizationList
 import za.co.indrajala.fluid.bit.toHex
 import java.math.BigInteger
+import java.util.*
 
 fun ASN1Sequence.getSequenceAtIndex(index: Int): ASN1Sequence? {
     return (this.getObjectAt(index) ?: return null) as ASN1Sequence
@@ -70,4 +72,7 @@ fun ASN1Sequence.getBooleanForTag(tagNumber: Int): Boolean? {
     return (raw as ASN1Boolean).getBoolean()
 }
 
-
+fun ASN1Sequence.getULongDateForTag(tagNumber: Int): Date? {
+    val ms = getBigIntegerForTag(AuthorizationList.TagNumber.CreationDateTime)?.toLong() ?: return null
+    return Date(ms)
+}

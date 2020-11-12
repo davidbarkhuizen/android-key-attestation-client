@@ -86,23 +86,20 @@ class AuthorizationList(
     val rsaPublicExponent: Int?
         get() = seq.getIntForTag(TagNumber.RsaPublicExponent)
 
-    val activeDateTime: Int?
-        get() = seq.getIntForTag(TagNumber.ActiveDateTime)
+    val activeDateTime: Date?
+        get() = seq.getULongDateForTag(TagNumber.ActiveDateTime)
 
-    val originationExpireDateTime: Int?
-        get() = seq.getIntForTag(TagNumber.OriginationDateTime)
+    val originationExpireDateTime: Date?
+        get() = seq.getULongDateForTag(TagNumber.OriginationDateTime)
 
-    val usageExpireDateTime: Int?
-        get() = seq.getIntForTag(TagNumber.UsageExpireDateTime)
+    val usageExpireDateTime: Date?
+        get() = seq.getULongDateForTag(TagNumber.UsageExpireDateTime)
 
     val noAuthRequired: Boolean?
         get() = seq.getBooleanForTag(TagNumber.NoAuthRequired)
 
     val creationDateTime: Date?
-        get() {
-            val ms = seq.getBigIntegerForTag(TagNumber.CreationDateTime)?.toLong() ?: return null
-            return Date(ms)
-        }
+        get() = seq.getULongDateForTag(TagNumber.CreationDateTime)
 
     val origin: Origin?
         get() {

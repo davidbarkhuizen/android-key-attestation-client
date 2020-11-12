@@ -1,17 +1,14 @@
 package za.co.indrajala.fluid.crypto
 
 import android.icu.util.Calendar
-import android.icu.util.GregorianCalendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import za.co.indrajala.fluid.attestation.Google
-import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.bit.toHex
-import za.co.indrajala.fluid.crypto.java.X509
 import za.co.indrajala.fluid.crypto.java.summary
 import za.co.indrajala.fluid.crypto.java.toDER
-import za.co.indrajala.fluid.crypto.java.toPEM
 import za.co.indrajala.fluid.log
+import java.math.BigInteger
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -152,50 +149,62 @@ class AndroidKeyStore {
         ): Boolean {
             log.v_header("generate and attest device root key")
 
-            val validFrom = GregorianCalendar()
-            val validTo = validFrom.clone() as GregorianCalendar
+            val validFrom = Calendar.getInstance()
+
+            val validTo = validFrom.clone() as Calendar
             validTo.add(Calendar.MINUTE, lifeTimeMinutes)
 
-            val params = AsymKeyParams(
-                subjectCommonName = alias,
-                certSN = serialNumber,
-                keySizeBits = sizeInBits,
-                purpose = KeyPurpose.Integrity,
-                digest = KeyProperties.DIGEST_SHA512,
-                signaturePadding = KeyProperties.SIGNATURE_PADDING_RSA_PSS,
-                validFrom = validFrom,
-                validTo = validTo
-            )
+            val keyPurpose = KeyProperties.PURPOSE_VERIFY
 
-            val keySpecBuilder = KeyGenParameterSpec
-                .Builder(alias, params.purpose.purpose)
-                .setCertificateSubject(X500Principal("CN=${params.subjectCommonName}"))
-                .setCertificateSerialNumber(params.certSN)
-                .setDigests(params.digest)
+            val keySpecBuilder: KeyGenParameterSpec.Builder = KeyGenParameterSpec
+                .Builder(alias, keyPurpose)
+                .setCertificateSubject(X500Principal("CN=${alias}"))
+                .setCertificateSerialNumber(BigInteger.valueOf(serialNumber))
+                .setDigests(KeyProperties.DIGEST_SHA512)
+                // cert validity
                 .setCertificateNotBefore(validFrom.time)
                 .setCertificateNotAfter(validTo.time)
-                .setKeySize(params.keySizeBits)
+                .setKeySize(sizeInBits)
+                // key validity
+                .setKeyValidityStart(validFrom.time)
+                .setKeyValidityEnd(validTo.time)
 
             keySpecBuilder.setAttestationChallenge(serverChallenge)
             log.d("using server challenge", serverChallenge.toHex())
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 
-            if (params.purpose == KeyPurpose.Integrity) {
-                keySpecBuilder
-                    .setSignaturePaddings(params.signaturePadding)
-            } else {
-                keySpecBuilder
-                    .setEncryptionPaddings(params.encryptionPadding)
+            when (keyPurpose) {
+
+                KeyProperties.PURPOSE_VERIFY,
+                KeyProperties.PURPOSE_SIGN -> {
+                    keySpecBuilder.setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+
+                    // SIGNATURE_PADDING_RSA_PSS
+                    // SIGNATURE_PADDING_RSA_PKCS1
+                }
+
+                KeyProperties.PURPOSE_ENCRYPT,
+                KeyProperties.PURPOSE_DECRYPT -> {
+                    keySpecBuilder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+
+                    // ENCRYPTION_PADDING_NONE
+                    // ENCRYPTION_PADDING_PKCS7
+                    // ENCRYPTION_PADDING_RSA_PKCS1
+                    // ENCRYPTION_PADDING_RSA_OAEP
+                }
+
+                KeyProperties.PURPOSE_WRAP_KEY -> Unit
+
+                else -> Unit
             }
 
             val keyGenParamSpec = keySpecBuilder.build()
 
             // log.v("KeySpec.isStrongBoxBacked", keySpec.isStrongBoxBacked)
 
-            val keyGenerator = KeyPairGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE_NAME
-            )
+            val keyGenerator = KeyPairGenerator
+                .getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE_NAME)
 
             keyGenerator.initialize(keyGenParamSpec)
 

@@ -11,9 +11,7 @@ class AsymKeyParams(
     val purpose: KeyPurpose,
     val digest: String,
     val signaturePadding: String? = null,
-    val encryptionPadding: String? = null,
-    val validFrom: GregorianCalendar,
-    val validTo: GregorianCalendar
+    val encryptionPadding: String? = null
 ) {
     val certSN: BigInteger = BigInteger.valueOf(certSN)
 }
