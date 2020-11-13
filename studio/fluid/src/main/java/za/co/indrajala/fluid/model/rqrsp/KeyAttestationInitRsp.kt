@@ -1,11 +1,9 @@
 package za.co.indrajala.fluid.model.rqrsp
 
-data class KeyAttestationInitRsp(
-        val attestationID: String,
-        val challenge: String,
-        val keyLifeTimeMinutes: Int,
-        val keySizeBits: Int,
-        val keySerialNumber: Long
-    ) {
+import za.co.indrajala.fluid.model.AsymmetricKeyParameters
 
-}
+data class KeyAttestationInitRsp(
+    val succeeded: Boolean,
+    val reference: String,
+    val keyParams: AsymmetricKeyParameters
+)

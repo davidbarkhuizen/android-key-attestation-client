@@ -1,4 +1,4 @@
-package za.co.indrajala.fluid.model.device
+package za.co.indrajala.fluid.model
 
 import android.os.Build
 import android.provider.Settings

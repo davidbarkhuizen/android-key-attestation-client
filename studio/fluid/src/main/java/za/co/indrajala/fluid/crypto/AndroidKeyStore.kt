@@ -4,10 +4,14 @@ import android.icu.util.Calendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import za.co.indrajala.fluid.attestation.Google
-import za.co.indrajala.fluid.bit.toHex
+import za.co.indrajala.fluid.attestation.enums.Digest
+import za.co.indrajala.fluid.attestation.enums.Padding
+import za.co.indrajala.fluid.attestation.enums.Purpose
+import za.co.indrajala.fluid.bit.hexToUBytes
 import za.co.indrajala.fluid.crypto.java.summary
 import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.log
+import za.co.indrajala.fluid.model.AsymmetricKeyParameters
 import java.math.BigInteger
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -140,68 +144,87 @@ class AndroidKeyStore {
             return certChain.toList()
         }
 
-        fun generateDeviceRootKey(
-            alias: String,
-            serialNumber: Long,
-            serverChallenge: ByteArray,
-            lifeTimeMinutes: Int,
-            sizeInBits: Int
+        fun generateHWAttestedKey(
+                alias: String,
+                keyParams: AsymmetricKeyParameters
         ): Boolean {
             log.v_header("generate and attest device root key")
 
-            val validFrom = Calendar.getInstance()
-
-            val validTo = validFrom.clone() as Calendar
-            validTo.add(Calendar.MINUTE, lifeTimeMinutes)
-
             // TODO distinguish between cert and key lifetimes
 
-            val keyPurpose = KeyProperties.PURPOSE_VERIFY or
-                    KeyProperties.PURPOSE_SIGN or
-                    KeyProperties.PURPOSE_WRAP_KEY
+            // temporal validity
+            //
+            val validFrom = Calendar.getInstance()
+            val validTo = validFrom.clone() as Calendar
+            validTo.add(Calendar.MINUTE, keyParams.lifetimeMinutes)
+
+            // TODO move mappings to standalone location
+
+            val purpose = when (keyParams.purpose) {
+                Purpose.Decrypt -> KeyProperties.PURPOSE_DECRYPT
+                Purpose.Encrypt -> KeyProperties.PURPOSE_ENCRYPT
+                Purpose.Sign -> KeyProperties.PURPOSE_SIGN
+                Purpose.Verify -> KeyProperties.PURPOSE_VERIFY
+                Purpose.WrapKey -> KeyProperties.PURPOSE_WRAP_KEY
+                Purpose.DeriveKey -> throw UnsupportedOperationException("(Key)Purpose.DeriveKey")
+            }
+
+            val digest = when (keyParams.digest) {
+                Digest.NONE -> KeyProperties.DIGEST_NONE
+                Digest.MD5 -> KeyProperties.DIGEST_MD5
+                Digest.SHA1 -> KeyProperties.DIGEST_SHA1
+                Digest.SHA_2_224 -> KeyProperties.DIGEST_SHA224
+                Digest.SHA_2_256 -> KeyProperties.DIGEST_SHA256
+                Digest.SHA_2_384 -> KeyProperties.DIGEST_SHA384
+                Digest.SHA_2_512 -> KeyProperties.DIGEST_SHA512
+            }
 
             val keySpecBuilder: KeyGenParameterSpec.Builder = KeyGenParameterSpec
-                .Builder(alias, keyPurpose)
+                .Builder(alias, purpose)
                 .setCertificateSubject(X500Principal("CN=${alias}"))
-                .setCertificateSerialNumber(BigInteger.valueOf(serialNumber))
-                .setDigests(KeyProperties.DIGEST_SHA512)
-                // cert validity
-                .setCertificateNotBefore(validFrom.time)
-                .setCertificateNotAfter(validTo.time)
-                .setKeySize(sizeInBits)
-                // key validity
+                .setCertificateSerialNumber(BigInteger.valueOf(keyParams.serialNumber.toLong()))
+                .setKeySize(keyParams.sizeInBits)
+                .setDigests(digest)
                 .setKeyValidityStart(validFrom.time)
                 .setKeyValidityEnd(validTo.time)
+                .setCertificateNotBefore(validFrom.time)
+                .setCertificateNotAfter(validTo.time)
 
-            keySpecBuilder.setAttestationChallenge(serverChallenge)
-            log.d("using server challenge", serverChallenge.toHex())
+            // challenge: TODO mix in data
+            //
+            keySpecBuilder.setAttestationChallenge(keyParams.challenge.hexToUBytes().toByteArray())
+            log.d("using server challenge", keyParams.challenge)
 
             //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
 
-            when (keyPurpose) {
+            when (keyParams.purpose) {
+                Purpose.Decrypt, Purpose.Encrypt -> {
+                    val padding = when (keyParams.padding) {
+                        Padding.NONE -> KeyProperties.ENCRYPTION_PADDING_NONE
+                        Padding.PKCS7 -> KeyProperties.ENCRYPTION_PADDING_PKCS7
+                        Padding.RSA_OAEP -> KeyProperties.ENCRYPTION_PADDING_RSA_OAEP
+                        Padding.RSA_PKCS1_1_5_ENCRYPT -> KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1
 
-                KeyProperties.PURPOSE_VERIFY,
-                KeyProperties.PURPOSE_SIGN -> {
-                    keySpecBuilder.setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                        Padding.RSA_PSS,
+                        Padding.RSA_PKCS1_1_5_SIGN ->
+                            throw UnsupportedOperationException("RSA_PSS, RSA_PKCS1_1_5_SIGN paddings not supported for enc/dev")
+                    }
 
-                    // SIGNATURE_PADDING_RSA_PSS
-                    // SIGNATURE_PADDING_RSA_PKCS1
+                    keySpecBuilder.setEncryptionPaddings(padding)
                 }
+                Purpose.Sign, Purpose.Verify -> {
+                    val padding = when (keyParams.padding) {
+                        Padding.RSA_PKCS1_1_5_SIGN -> KeyProperties.SIGNATURE_PADDING_RSA_PKCS1
+                        Padding.RSA_PSS -> KeyProperties.SIGNATURE_PADDING_RSA_PSS
+                        Padding.NONE, Padding.RSA_PKCS1_1_5_ENCRYPT, Padding.PKCS7, Padding.RSA_OAEP->
+                            throw UnsupportedOperationException("NONE, RSA_PKCS1_1_5_ENCRYPT, PKCS7 paddings not supported for sign/verify")
+                    }
 
-                KeyProperties.PURPOSE_ENCRYPT,
-                KeyProperties.PURPOSE_DECRYPT -> {
-                    keySpecBuilder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
-
-                    // ENCRYPTION_PADDING_NONE
-                    // ENCRYPTION_PADDING_PKCS7
-                    // ENCRYPTION_PADDING_RSA_PKCS1
-                    // ENCRYPTION_PADDING_RSA_OAEP
+                    keySpecBuilder.setSignaturePaddings(padding)
                 }
-
-                KeyProperties.PURPOSE_WRAP_KEY -> Unit
-
                 else -> Unit
             }
+
 
             val keyGenParamSpec = keySpecBuilder.build()
 
@@ -214,7 +237,7 @@ class AndroidKeyStore {
 
             val keyGenTime = measureTimeMillis { keyGenerator.generateKeyPair() }
 
-            log.v("generated $sizeInBits bit asymmetric RSA key in $keyGenTime ms")
+            log.v("generated ${keyParams.sizeInBits} bit asymmetric RSA key in $keyGenTime ms")
 
             return true
         }

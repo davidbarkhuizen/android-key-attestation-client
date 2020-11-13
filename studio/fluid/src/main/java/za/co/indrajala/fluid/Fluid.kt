@@ -3,14 +3,13 @@ package za.co.indrajala.fluid
 import android.content.Context
 import com.google.gson.Gson
 import za.co.indrajala.fluid.attestation.KeyDescription
-import za.co.indrajala.fluid.bit.hexToUBytes
 import za.co.indrajala.fluid.crypto.*
 import za.co.indrajala.fluid.crypto.java.X509
 import za.co.indrajala.fluid.crypto.java.summary
 import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.crypto.java.toPEM
 import za.co.indrajala.fluid.http.HTTP
-import za.co.indrajala.fluid.model.device.*
+import za.co.indrajala.fluid.model.DeviceFingerprint
 import za.co.indrajala.fluid.model.rqrsp.KeyAttestationInitRq
 import za.co.indrajala.fluid.model.rqrsp.KeyAttestationInitRsp
 import za.co.indrajala.fluid.model.rqrsp.KeyAttestationRq
@@ -59,13 +58,7 @@ class Fluid(
 
         // generate device root key using received params
 
-        check(AndroidKeyStore.generateDeviceRootKey(
-            RootKeyAlias,
-            serialNumber = rsp.keySerialNumber,
-            serverChallenge = rsp.challenge.hexToUBytes().toByteArray(),
-            lifeTimeMinutes = rsp.keyLifeTimeMinutes,
-            sizeInBits = rsp.keySizeBits
-        ))
+        check(AndroidKeyStore.generateHWAttestedKey(RootKeyAlias, rsp.keyParams))
 
         val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
 
@@ -88,7 +81,7 @@ class Fluid(
         HTTP.post(
             "/attestation/key/attest",
             KeyAttestationRq(
-                rsp.attestationID,
+                rsp.reference,
                 chain.map { it.toDER() },
             ),
             ::handleKeyAttestationRsp
