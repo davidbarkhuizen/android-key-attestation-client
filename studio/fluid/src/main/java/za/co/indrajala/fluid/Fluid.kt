@@ -54,7 +54,10 @@ class Fluid(
         val rsp = Gson()
             .fromJson(json, KeyAttestationInitRsp::class.java)
 
-        // TODO check that we do indeed have permission
+        if (!rsp.succeeded) {
+            log.v("server rejected key attestation initiation request")
+            return
+        }
 
         // generate device root key using received params
 
@@ -77,6 +80,9 @@ class Fluid(
             log.v_rjust("DER")
             log.v(it.toDER())
         }
+
+        // TODO handle time difference between phone and server
+        Thread.sleep(50)
 
         HTTP.post(
             "/attestation/key/attest",
