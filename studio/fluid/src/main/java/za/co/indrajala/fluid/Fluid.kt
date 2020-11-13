@@ -2,7 +2,6 @@ package za.co.indrajala.fluid
 
 import android.content.Context
 import com.google.gson.Gson
-import za.co.indrajala.fluid.asn1_poc.DER
 import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.bit.hexToUBytes
 import za.co.indrajala.fluid.crypto.*
@@ -12,10 +11,10 @@ import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.crypto.java.toPEM
 import za.co.indrajala.fluid.http.HTTP
 import za.co.indrajala.fluid.model.device.*
-import za.co.indrajala.fluid.model.rqrsp.DeviceRegPermissionRq
-import za.co.indrajala.fluid.model.rqrsp.DeviceRegPermissionRsp
-import za.co.indrajala.fluid.model.rqrsp.DeviceRegRq
-import za.co.indrajala.fluid.model.rqrsp.DeviceRegRsp
+import za.co.indrajala.fluid.model.rqrsp.KeyAttestationInitRq
+import za.co.indrajala.fluid.model.rqrsp.KeyAttestationInitRsp
+import za.co.indrajala.fluid.model.rqrsp.KeyAttestationRq
+import za.co.indrajala.fluid.model.rqrsp.KeyAttestationRsp
 
 class Fluid(
     host: String,
@@ -36,25 +35,25 @@ class Fluid(
 
     // device registration
 
-    private fun requestPermissionToRegisterDevice(
+    private fun initiateKeyAttestationAtServer(
         fingerprint: DeviceFingerprint
     ) {
         HTTP.post(
-            "/device-registration/permission",
-            DeviceRegPermissionRq(fingerprint),
-            ::handlePermissionToRegisterDevice
+            "/attestation/key/init",
+            KeyAttestationInitRq(fingerprint),
+            ::handleKeyAttInitRspFromServer
         )
     }
 
-    private fun handlePermissionToRegisterDevice(json: String?) {
+    private fun handleKeyAttInitRspFromServer(json: String?) {
 
         if (json == null) {
             log.v("null response body received from server")
             return
         }
 
-        val permission = Gson()
-            .fromJson(json, DeviceRegPermissionRsp::class.java)
+        val rsp = Gson()
+            .fromJson(json, KeyAttestationInitRsp::class.java)
 
         // TODO check that we do indeed have permission
 
@@ -62,10 +61,10 @@ class Fluid(
 
         check(AndroidKeyStore.generateDeviceRootKey(
             RootKeyAlias,
-            serialNumber = permission.keySN,
-            serverChallenge = permission.keyAttestationChallenge.hexToUBytes().toByteArray(),
-            lifeTimeMinutes = permission.keyLifeTimeMinutes,
-            sizeInBits = permission.keySizeBits
+            serialNumber = rsp.keySerialNumber,
+            serverChallenge = rsp.challenge.hexToUBytes().toByteArray(),
+            lifeTimeMinutes = rsp.keyLifeTimeMinutes,
+            sizeInBits = rsp.keySizeBits
         ))
 
         val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
@@ -87,18 +86,18 @@ class Fluid(
         }
 
         HTTP.post(
-            "/device-registration/register",
-            DeviceRegRq(
-                permission.registrationID,
+            "/attestation/key/attest",
+            KeyAttestationRq(
+                rsp.attestationID,
                 chain.map { it.toDER() },
             ),
-            ::handleDeviceRegistrationResponse
+            ::handleKeyAttestationRsp
         )
     }
 
-    private fun handleDeviceRegistrationResponse(json: String?) {
+    private fun handleKeyAttestationRsp(json: String?) {
         val regResult = Gson()
-            .fromJson(json!!, DeviceRegRsp::class.java)
+            .fromJson(json!!, KeyAttestationRsp::class.java)
 
         log.v(
             if (regResult.registered)
@@ -108,7 +107,7 @@ class Fluid(
         )
     }
 
-    fun initiateDeviceRegistration(context: Context) {
+    fun generateAndAttestKey(context: Context) {
 
         try {
 
@@ -116,7 +115,7 @@ class Fluid(
             val deviceFingerprint = DeviceFingerprint.print(context)
             log.v(deviceFingerprint.toString())
 
-            requestPermissionToRegisterDevice(deviceFingerprint)
+            initiateKeyAttestationAtServer(deviceFingerprint)
         } catch (e: Exception) {
             val ee = e;
         }

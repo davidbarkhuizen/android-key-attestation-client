@@ -3,6 +3,66 @@ TODO
 - remote key attestation
 - performance profiling (key gen, enc, dec, sign, verify)
 
+-------------------------------
+
+json model definition out of sync
+
+
+E/AndroidRuntime: FATAL EXCEPTION: OkHttp Dispatcher
+    Process: za.co.indrajala.fluid, PID: 12912
+    java.lang.NullPointerException: Parameter specified as non-null is null: method kotlin.jvm.internal.Intrinsics.checkNotNullParameter, parameter registrationID
+        at za.co.indrajala.fluid.model.rqrsp.DeviceRegRq.<init>(Unknown Source:2)
+        at za.co.indrajala.fluid.Fluid.handlePermissionToRegisterDevice(Fluid.kt:91)
+        at za.co.indrajala.fluid.Fluid.access$handlePermissionToRegisterDevice(Fluid.kt:20)
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:45)
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:20)
+        at za.co.indrajala.fluid.http.HTTP$Companion$post$callBacks$1.onResponse(HTTP.kt:66)
+        at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:519)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+        at java.lang.Thread.run(Thread.java:919)
+
+
+
+-------------------------------
+
+server returned non JSON body (html, text) in response to route not existing
+
+E/AndroidRuntime: FATAL EXCEPTION: OkHttp Dispatcher
+    Process: za.co.indrajala.fluid, PID: 3964
+    com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
+        at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:226)
+        at com.google.gson.Gson.fromJson(Gson.java:932)
+        at com.google.gson.Gson.fromJson(Gson.java:897)
+        at com.google.gson.Gson.fromJson(Gson.java:846)
+        at com.google.gson.Gson.fromJson(Gson.java:817)
+        at za.co.indrajala.fluid.Fluid.handlePermissionToRegisterDevice(Fluid.kt:57)
+        at za.co.indrajala.fluid.Fluid.access$handlePermissionToRegisterDevice(Fluid.kt:20)
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:45)
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:20)
+        at za.co.indrajala.fluid.http.HTTP$Companion$post$callBacks$1.onResponse(HTTP.kt:66)
+        at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:519)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+        at java.lang.Thread.run(Thread.java:919)
+     Caused by: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
+        at com.google.gson.stream.JsonReader.beginObject(JsonReader.java:386)
+        at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:215)
+        at com.google.gson.Gson.fromJson(Gson.java:932) 
+        at com.google.gson.Gson.fromJson(Gson.java:897) 
+        at com.google.gson.Gson.fromJson(Gson.java:846) 
+        at com.google.gson.Gson.fromJson(Gson.java:817) 
+        at za.co.indrajala.fluid.Fluid.handlePermissionToRegisterDevice(Fluid.kt:57) 
+        at za.co.indrajala.fluid.Fluid.access$handlePermissionToRegisterDevice(Fluid.kt:20) 
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:45) 
+        at za.co.indrajala.fluid.Fluid$requestPermissionToRegisterDevice$1.invoke(Fluid.kt:20) 
+        at za.co.indrajala.fluid.http.HTTP$Companion$post$callBacks$1.onResponse(HTTP.kt:66) 
+        at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:519) 
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167) 
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641) 
+        at java.lang.Thread.run(Thread.java:919) 
+
+
 => use SoftHSM for server-side work, to support automated testing
 
 # Fluid Authentication & Authorization
@@ -286,7 +346,105 @@ VerifiedBootState ::= ENUMERATED {
 }
 ```
 
+### CRL
 
+https://android.googleapis.com/attestation/status
+
+#### JSON schema
+
+```
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "entries": {
+      "description" : "Each entry represents the status of an attestation key. The dictionary-key is the certificate serial number in lowercase hex.",
+      "type": "object",
+      "propertyNames": {
+         "pattern": "^[a-f0-9]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "[REQUIRED] Current status of the key.",
+            "type": "string",
+            "enum": ["REVOKED", "SUSPENDED"]
+          },
+          "expires": {
+            "description": "[OPTIONAL] UTC date when certificate expires in ISO8601 format (YYYY-MM-DD). Can be used to clear expired certificates from the status list.",
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "description": "[OPTIONAL] Reason for the current status.",
+            "type": "string",
+            "enum": ["UNSPECIFIED", "KEY_COMPROMISE", "CA_COMPROMISE", "SUPERSEDED", "SOFTWARE_FLAW"]
+          },
+          "comment": {
+            "description": "[OPTIONAL] Free form comment about the key status.",
+            "type": "string",
+            "maxLength": 140
+          }
+        },
+        "required": ["status"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["entries"],
+  "additionalProperties": false
+}
+```
+
+#### example
+
+```
+{
+  "entries": {
+    "6681152659205225093" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "8350192447815228107" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "9408173275444922801" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "11244410301401252959" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "15346629759498347257" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "1228286566665971148" : {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "17471682139930361099" : {
+      "status": "REVOKED",
+      "reason": "SOFTWARE_FLAW"
+    },
+    "e80fcf7b85d652aa": {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "2621004353020741590": {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    },
+    "1051246719628187981": {
+      "status": "REVOKED",
+      "reason": "KEY_COMPROMISE"
+    }
+  }
+}
+```
 
 
 

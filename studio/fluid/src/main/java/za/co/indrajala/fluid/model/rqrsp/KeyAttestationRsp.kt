@@ -1,5 +1,5 @@
 package za.co.indrajala.fluid.model.rqrsp
 
-class DeviceRegRsp(
+class KeyAttestationRsp(
     val registered: Boolean
 )

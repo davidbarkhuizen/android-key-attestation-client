@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
 
     fun onClick(view: View) {
         try {
-            fluid.initiateDeviceRegistration(applicationContext)
+            fluid.generateAndAttestKey(applicationContext)
         } catch (e: Exception) {
             log.e("device registration", e)
         }

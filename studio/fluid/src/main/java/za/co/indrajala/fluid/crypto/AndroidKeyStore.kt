@@ -154,7 +154,11 @@ class AndroidKeyStore {
             val validTo = validFrom.clone() as Calendar
             validTo.add(Calendar.MINUTE, lifeTimeMinutes)
 
-            val keyPurpose = KeyProperties.PURPOSE_VERIFY
+            // TODO distinguish between cert and key lifetimes
+
+            val keyPurpose = KeyProperties.PURPOSE_VERIFY or
+                    KeyProperties.PURPOSE_SIGN or
+                    KeyProperties.PURPOSE_WRAP_KEY
 
             val keySpecBuilder: KeyGenParameterSpec.Builder = KeyGenParameterSpec
                 .Builder(alias, keyPurpose)
