@@ -16,8 +16,8 @@ import za.co.indrajala.fluid.model.rqrsp.KeyAttestationRq
 import za.co.indrajala.fluid.model.rqrsp.KeyAttestationRsp
 
 class Fluid(
-    host: String,
-    port: Int,
+    var host: String,
+    var port: Int,
 ) {
     companion object {
         private const val RootKeyAlias = "fluid.root"

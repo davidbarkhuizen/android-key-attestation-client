@@ -3,14 +3,21 @@ package za.co.indrajala.fluid
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
 
-    var fluid = Fluid("192.168.8.104", 8777)
+    private val host = "192.168.8.105"
+    private val port = 8777
+
+    var fluid = Fluid(host, port)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val hostView = findViewById<TextView>(R.id.hostLabel) as TextView
+        hostView.text = "$host:$port"
     }
 
     fun onClick(view: View) {
