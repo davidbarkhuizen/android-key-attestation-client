@@ -1,6 +1,7 @@
 package za.co.indrajala.fluid
 
 import android.content.Context
+import android.security.keystore.StrongBoxUnavailableException
 import com.google.gson.Gson
 import za.co.indrajala.fluid.attestation.KeyDescription
 import za.co.indrajala.fluid.crypto.*
@@ -59,10 +60,20 @@ class Fluid(
             return
         }
 
-        // generate device root key using received params
+        var generated = false
+        try {
+            generated = AndroidKeyStore.generateHwAttestedKey(RootKeyAlias, rsp.keyParams)
+        } catch (e: StrongBoxUnavailableException) {
+            log.e("key generation failed: no strong box", e)
+        } catch (e: Exception) {
+            log.e("key generation failed: general exception", e)
+        }
 
-        check(AndroidKeyStore.generateHWAttestedKey(RootKeyAlias, rsp.keyParams))
-
+        if (!generated) {
+            // TODO report failures back to server, don't leave entry open
+            log.v("terminating on key generation failure")
+            return
+        }
         val chain = AndroidKeyStore.getCertChainForKey(RootKeyAlias)
 
         chain.forEachIndexed { index, it ->

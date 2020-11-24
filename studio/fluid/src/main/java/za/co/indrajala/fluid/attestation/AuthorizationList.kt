@@ -80,8 +80,11 @@ class AuthorizationList(
     val padding: Set<Padding>?
         get() = seq.getIntSetForTag(TagNumber.Padding)?.map { Padding.fromValue(it) }?.toSet()
 
-    val ecCurve: Set<Padding>?
-        get() = seq.getIntSetForTag(TagNumber.ECCurve)?.map { Padding.fromValue(it) }?.toSet()
+    val ecCurve: ECCurve?
+        get() {
+            val intVal = seq.getIntForTag(TagNumber.ECCurve) ?: return null
+            return ECCurve.fromValue(intVal)
+        }
 
     val rsaPublicExponent: Int?
         get() = seq.getIntForTag(TagNumber.RsaPublicExponent)

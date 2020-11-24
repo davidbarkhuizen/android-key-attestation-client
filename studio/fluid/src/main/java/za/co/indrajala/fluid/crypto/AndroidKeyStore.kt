@@ -4,6 +4,7 @@ import android.icu.util.Calendar
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import za.co.indrajala.fluid.attestation.Google
+import za.co.indrajala.fluid.attestation.enums.Algorithm
 import za.co.indrajala.fluid.attestation.enums.Digest
 import za.co.indrajala.fluid.attestation.enums.Padding
 import za.co.indrajala.fluid.attestation.enums.Purpose
@@ -13,14 +14,13 @@ import za.co.indrajala.fluid.crypto.java.toDER
 import za.co.indrajala.fluid.log
 import za.co.indrajala.fluid.model.AsymmetricKeyParameters
 import java.math.BigInteger
-import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.KeyStoreException
-import java.security.SignatureException
+import java.security.*
 import java.security.cert.Certificate
 import java.security.cert.CertificateExpiredException
 import java.security.cert.CertificateNotYetValidException
 import java.security.cert.X509Certificate
+import java.security.spec.ECGenParameterSpec
+import java.security.spec.RSAKeyGenParameterSpec
 import javax.security.auth.x500.X500Principal
 import kotlin.system.measureTimeMillis
 
@@ -144,7 +144,7 @@ class AndroidKeyStore {
             return certChain.toList()
         }
 
-        fun generateHWAttestedKey(
+        fun generateHwAttestedKey(
                 alias: String,
                 keyParams: AsymmetricKeyParameters
         ): Boolean {
@@ -225,19 +225,44 @@ class AndroidKeyStore {
                 else -> Unit
             }
 
+            //  NIST P-256 (aka secp256r1 aka prime256v1)
+            //  secp256r1
+            //
+            when (keyParams.algorithm) {
+                Algorithm.EC ->
+                    keySpecBuilder.setAlgorithmParameterSpec(
+                        ECGenParameterSpec(keyParams.ecCurve)
+                    )
+                Algorithm.RSA ->
+                    keySpecBuilder.setAlgorithmParameterSpec(
+                        RSAKeyGenParameterSpec(
+                            keyParams.sizeInBits,
+                            BigInteger.valueOf(keyParams.rsaExponent.toLong())
+                        )
+                    )
+            }
+
+            if (keyParams.requireHSM) {
+                keySpecBuilder.setIsStrongBoxBacked(true)
+            }
 
             val keyGenParamSpec = keySpecBuilder.build()
 
-            // log.v("KeySpec.isStrongBoxBacked", keySpec.isStrongBoxBacked)
+            val algorithm = when (keyParams.algorithm) {
+                Algorithm.EC -> KeyProperties.KEY_ALGORITHM_EC
+                Algorithm.RSA -> KeyProperties.KEY_ALGORITHM_RSA
+                else -> throw UnsupportedOperationException("algorithm not supported for asymmetric key generation ${keyParams.algorithm}")
+            }
 
-            val keyGenerator = KeyPairGenerator
-                .getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE_NAME)
+            val keyGenerator: KeyPairGenerator =
+                KeyPairGenerator.getInstance(algorithm, ANDROID_KEYSTORE_NAME)
 
-            keyGenerator.initialize(keyGenParamSpec)
+            // TODO initialize with entropy from the server ?
+            keyGenerator.initialize(keyGenParamSpec, SecureRandom())
 
-            val keyGenTime = measureTimeMillis { keyGenerator.generateKeyPair() }
 
-            log.v("generated ${keyParams.sizeInBits} bit asymmetric RSA key in $keyGenTime ms")
+            val keyGenTime = measureTimeMillis { val generated = keyGenerator.generateKeyPair() }
+            log.v("generated ${keyParams.sizeInBits} bit asymmetric key in $keyGenTime ms")
 
             return true
         }
