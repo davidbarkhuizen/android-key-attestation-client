@@ -195,8 +195,6 @@ class AndroidKeyStore {
             keySpecBuilder.setAttestationChallenge(keyParams.challenge.hexToUBytes().toByteArray())
             log.d("using server challenge", keyParams.challenge)
 
-            //.setIsStrongBoxBacked(true) => android.security.keystore.StrongBoxUnavailableException: Failed to generate key pair
-
             when (keyParams.purpose) {
                 Purpose.Decrypt, Purpose.Encrypt -> {
                     val padding = when (keyParams.padding) {

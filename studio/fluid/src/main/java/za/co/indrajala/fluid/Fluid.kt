@@ -45,7 +45,12 @@ class Fluid(
         )
     }
 
-    private fun handleKeyAttInitRspFromServer(json: String?) {
+    private fun handleKeyAttInitRspFromServer(json: String?, error: Boolean) {
+
+        if (error) {
+            log.v("error initiating key attestation ")
+            return
+        }
 
         if (json == null) {
             log.v("null response body received from server")
@@ -105,7 +110,13 @@ class Fluid(
         )
     }
 
-    private fun handleKeyAttestationRsp(json: String?) {
+    private fun handleKeyAttestationRsp(json: String?, error: Boolean) {
+
+        if (error) {
+            log.v("error completing key attestation ")
+            return
+        }
+
         val regResult = Gson()
             .fromJson(json!!, KeyAttestationRsp::class.java)
 

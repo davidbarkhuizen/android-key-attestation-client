@@ -35,7 +35,7 @@ class HTTP {
         val urlBase: String
             get() = "$protocol://$host:$port"
 
-        fun post(path: String, payload: Any, callback: (json: String?) -> Unit) {
+        fun post(path: String, payload: Any, callback: (json: String?, error: Boolean) -> Unit) {
 
             val jsonRequest = Gson().toJson(payload)
             val url = "$urlBase$path"
@@ -49,7 +49,7 @@ class HTTP {
                     }
 
 
-                    callback(null)
+                    callback(null, true)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -63,7 +63,7 @@ class HTTP {
                             log.v("rsp to POST from $url: $jsonResponse")
                         }
 
-                        callback(jsonResponse)
+                        callback(jsonResponse, false)
                     }
                 }
             }
